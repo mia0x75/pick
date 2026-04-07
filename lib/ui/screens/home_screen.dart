@@ -12,7 +12,6 @@ import '../../shared/constants.dart';
 import '../widgets/recently_played_card.dart';
 import '../widgets/favorite_card.dart';
 import '../widgets/resource_card.dart';
-import '../widgets/secret_code_overlay.dart';
 import '../widgets/settings_drawer.dart';
 import '../widgets/resource_context_menu.dart';
 import '../widgets/recently_played_context_menu.dart';
@@ -542,7 +541,7 @@ Widget _buildRecentList() {
       title,
       style: const TextStyle(
         color: Colors.white,
-        fontSize: 20.sp,
+        fontSize: 20, // TODO: use sp
         fontWeight: FontWeight.bold,
         letterSpacing: 1.2,
       ),
@@ -639,13 +638,13 @@ Widget _buildRecentList() {
           padding: EdgeInsets.all(12.w),
           decoration: BoxDecoration(color: Colors.black26, border: Border.all(color: Colors.white10)),
           child: Text(value, style: TextStyle(color: Colors.white38)),
-        )
+        ),
       ],
     );
   }
 
   // 辅助组件：电视焦点按钮
-  Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrimary}) {
+Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrimary}) {
     return StatefulBuilder(builder: (context, setState) {
       bool isFocused = false;
       return Focus(
@@ -657,17 +656,34 @@ Widget _buildRecentList() {
           }
           return KeyEventResult.ignored;
         },
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
           decoration: BoxDecoration(
-            color: isFocused ? (isPrimary ? const Color(0xFFFF6B35) : Colors.white24) : Colors.transparent,
-            border: Border.all(color: isFocused ? Colors.white : Colors.white10),
-            borderRadius: BorderRadius.circular(8),
+            // 只有聚焦时才显示背景色，区分主次按钮
+            color: isFocused 
+                ? (isPrimary ? const Color(0xFFFF6B35) : Colors.white24) 
+                : Colors.transparent,
+            // 只有聚焦时才显示白色边框，增强视觉引导
+            border: Border.all(
+              color: isFocused ? Colors.white : Colors.transparent, 
+              width: 2.w,
+            ),
+            borderRadius: BorderRadius.circular(8.r),
           ),
-          child: Text(text, style: TextStyle(color: isFocused ? Colors.white : (isPrimary ? const Color(0xFFFF6B35) : Colors.grey))),
+          child: Text(
+            text, 
+            style: TextStyle(
+              // 聚焦时文字加粗并变白，非聚焦时主按钮用品牌色，次按钮用灰色
+              color: isFocused ? Colors.white : (isPrimary ? const Color(0xFFFF6B35) : Colors.grey),
+              fontWeight: isFocused ? FontWeight.bold : FontWeight.normal,
+              fontSize: 18.sp,
+            ),
+          ),
         ),
       );
-    });
+    },
+   );
   }
 
   void _showChangeCodeDialog(BuildContext context) {
