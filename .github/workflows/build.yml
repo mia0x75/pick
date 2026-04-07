@@ -93,7 +93,7 @@ jobs:
 
       - name: Decode Keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: secrets.KEYSTORE_BASE64 != ''
 
       - name: Create key.properties
         run: |
@@ -101,7 +101,7 @@ jobs:
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
           echo "storeFile=keystore.jks" >> android/key.properties
-        if: ${{ secrets.KEYSTORE_PASSWORD != '' }}
+        if: secrets.KEYSTORE_PASSWORD != ''
 
       - name: Build Release APK
         run: flutter build apk --release
