@@ -17,7 +17,6 @@ import '../widgets/settings_drawer.dart';
 import '../widgets/resource_context_menu.dart';
 import '../widgets/recently_played_context_menu.dart';
 import '../widgets/favorites_context_menu.dart';
-import 'history_page.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
