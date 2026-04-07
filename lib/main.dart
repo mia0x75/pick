@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,9 +35,6 @@ void main() {
 
       FlutterBugly.init(
         androidAppId: '75b96efd9c',
-        appKey: '59e9d4d6-5001-4e8c-9f15-86e931217e2c',
-        channel: 'pick_player',
-        autoCheckUpgrade: false,
       );
 
       runApp(const ProviderScope(child: PickPlayerApp()));
