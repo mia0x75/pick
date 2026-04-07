@@ -69,7 +69,7 @@ class WebDavService {
             'path': item.path,
             'isDir': item.isDir,
             'size': item.size,
-            'lastModified': item.mtime?.toIso8601String(),
+            'lastModified': item.mTime?.toIso8601String() ?? '',
           };
         }).toList();
         break;
