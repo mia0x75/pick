@@ -32,12 +32,8 @@ Future<void> main() async {
 
   await SentryFlutter.init(
     (options) {
-      options.dsn = const String.fromEnvironment(
-        'SENTRY_DSN',
-        defaultValue: '',
-      );
-      options.tracesSampleRate = 1.0;
-      options.profilesSampleRate = 1.0;
+      options.dsn = 'https://d012ef2bfa6523f93b451ee39c759921@o4511178001350656.ingest.us.sentry.io/4511178003251200';
+      options.enableLogs = true;
     },
     appRunner: () => runApp(const ProviderScope(child: PickPlayerApp())),
   );
