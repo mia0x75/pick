@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,12 +6,15 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/providers/stealth_provider.dart';
 import '../../core/providers/node_provider.dart';
+import '../../core/models/storage_node.dart';
 import '../../shared/constants.dart';
-import '../widgets/stripe_background.dart';
 import '../widgets/recently_played_card.dart';
 import '../widgets/favorite_card.dart';
 import '../widgets/resource_card.dart';
-import '../widgets/stealth_dialog.dart';
+import '../widgets/secret_code_overlay.dart';
+import '../widgets/settings_drawer.dart';
+import '../widgets/resource_context_menu.dart';
+import 'history_page.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -33,6 +35,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late Animation<double> _flashAnimation;
 
   final List<Map<String, dynamic>> _recentItems = [];
+
+  bool _showSecretOverlay = false;
+  bool _showContextMenu = false;
+  StorageNode? _contextMenuNode;
 
   @override
   void initState() {
@@ -75,6 +81,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     final visibleNodes = nodes.where((n) => isUnlocked || !n.isPrivate).toList();
 
+    // Secret code overlay
+    if (_showSecretOverlay) {
+      return SecretCodeOverlay(
+        onCodeComplete: (code) {
+          ref.read(stealthProvider.notifier).verifyCode(
+            code.map((k) => AppConstants.defaultSecretCode.indexOf(k)).toList(),
+          );
+          setState(() => _showSecretOverlay = false);
+        },
+        onCancel: () {
+          ref.read(stealthProvider.notifier).lock();
+          setState(() => _showSecretOverlay = false);
+        },
+      );
+    }
+
     return KeyboardListener(
       focusNode: FocusNode()..requestFocus(),
       onKeyEvent: (event) {
@@ -84,13 +106,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF0D0D0D),
-        endDrawer: _buildSettingsDrawer(),
+        endDrawer: SettingsDrawer(
+          onClose: () => Navigator.of(context).pop(),
+        ),
         body: Stack(
           children: [
-            // 1. Stripe pattern background
-            const StripeBackground(),
+            // 1. Background image
+            Image.asset(
+              'assets/images/splash_background.png',
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            ),
+            Container(color: const Color(0xFF000000).withOpacity(0.7)),
 
-            // 2. Purple flash overlay on stealth unlock
+            // 2. Purple flash overlay
             AnimatedBuilder(
               animation: _flashAnimation,
               builder: (context, child) {
@@ -102,19 +132,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               },
             ),
 
-            // 3. Main content: three rows, fixed one screen
+            // 3. Context menu overlay
+            if (_showContextMenu && _contextMenuNode != null)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () => setState(() => _showContextMenu = false),
+                  child: ResourceContextMenu(
+                    node: _contextMenuNode!,
+                    onTogglePrivate: (isPrivate) {
+                      ref.read(nodeProvider.notifier).togglePrivate(
+                        _contextMenuNode!.id,
+                        isPrivate,
+                      );
+                    },
+                    onMove: () {},
+                    onEdit: () {},
+                    onDelete: () {
+                      ref.read(nodeProvider.notifier).removeNode(
+                        _contextMenuNode!.id,
+                      );
+                    },
+                    onClose: () => setState(() => _showContextMenu = false),
+                  ),
+                ),
+              ),
+
+            // 4. Main content
             SafeArea(
               child: Padding(
                 padding: EdgeInsets.only(
                   left: 96.w,
                   right: 96.w,
                   top: 54.h,
-                  bottom: 54.h,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Row 1: Recently Played (手风琴大图行)
+                    // Row 1: Recently Played
                     RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,10 +197,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                       if (index == _recentItems.length) {
                                         return Padding(
                                           padding: EdgeInsets.only(right: 24.w),
-                                          child: RecentlyPlayedCard(
-                                            title: '播放历史',
-                                            isHistoryButton: true,
-                                          ),
+                                          child: _buildHistoryButton(),
                                         );
                                       }
                                       final item = _recentItems[index];
@@ -168,7 +219,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
                     SizedBox(height: 32.h),
 
-                    // Row 2: Favorites (快捷网格行)
+                    // Row 2: Favorites
                     RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,6 +254,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                             name: fav.name,
                                             posterUrl: fav.posterUrl,
                                             icon: Icons.movie,
+                                            onMenu: () {},
                                           ),
                                         ),
                                       );
@@ -215,7 +267,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
                     SizedBox(height: 32.h),
 
-                    // Row 3: Resources (模块化条纹块)
+                    // Row 3: Resources
                     RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,40 +294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 if (index == visibleNodes.length) {
                                   return Padding(
                                     padding: EdgeInsets.only(right: 20.w),
-                                    child: Focus(
-                                      onFocusChange: (_) {},
-                                      onKeyEvent: (node, event) {
-                                        if (event is KeyDownEvent) {
-                                          if (event.logicalKey == LogicalKeyboardKey.select ||
-                                              event.logicalKey == LogicalKeyboardKey.enter) {
-                                            _showAddResourceDialog(context);
-                                            return KeyEventResult.handled;
-                                          }
-                                          if (event.logicalKey == LogicalKeyboardKey.contextMenu ||
-                                              event.logicalKey == LogicalKeyboardKey.keyM) {
-                                            if (isUnlocked) _showChangeCodeDialog(context);
-                                            return KeyEventResult.handled;
-                                          }
-                                        }
-                                        return KeyEventResult.ignored;
-                                      },
-                                      child: Container(
-                                        width: 160.w,
-                                        height: 160.h,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF1E1E1E),
-                                          borderRadius: BorderRadius.circular(12.r),
-                                          border: Border.all(color: Colors.white10),
-                                        ),
-                                        child: Center(
-                                          child: Icon(
-                                            Icons.add_rounded,
-                                            size: 64.sp,
-                                            color: const Color(0xFFFF6B35),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                    child: _buildAddResourceButton(isUnlocked),
                                   );
                                 }
                                 final node = visibleNodes[index];
@@ -283,7 +302,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                   padding: EdgeInsets.only(right: 20.w),
                                   child: SizedBox(
                                     width: 160.w,
-                                    child: ResourceCard(node: node),
+                                    child: ResourceCard(
+                                      node: node,
+                                      onMenu: isUnlocked
+                                          ? () => _showResourceMenu(node)
+                                          : null,
+                                    ),
                                   ),
                                 );
                               },
@@ -297,60 +321,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
 
-            // 4. Top-right settings icon
+            // 5. Settings icon
             Positioned(
               top: 54.h,
               right: 96.w,
-              child: Focus(
-                onFocusChange: (focused) {
-                  if (focused && isGlowing) {
-                    _showStealthInputDialog(context);
-                  }
-                },
-                onKeyEvent: (node, event) {
-                  if (event is KeyDownEvent) {
-                    if (event.logicalKey == LogicalKeyboardKey.select ||
-                        event.logicalKey == LogicalKeyboardKey.enter) {
-                      if (!isGlowing) {
-                        Scaffold.of(context).openEndDrawer();
-                      }
-                      return KeyEventResult.handled;
-                    }
-                    if (event.logicalKey == LogicalKeyboardKey.select ||
-                        event.logicalKey == LogicalKeyboardKey.enter) {
-                      // Long press detection handled by timer
-                    }
-                  }
-                  return KeyEventResult.ignored;
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: 48.w,
-                  height: 48.h,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isGlowing
-                        ? const Color(0xFFBB86FC).withOpacity(0.6)
-                        : Colors.transparent,
-                    boxShadow: isGlowing
-                        ? [
-                            BoxShadow(
-                              color: const Color(0xFFBB86FC).withOpacity(0.8),
-                              blurRadius: 12,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.settings,
-                      color: isGlowing ? Colors.white : Colors.grey[400],
-                      size: 24.sp,
-                    ),
-                  ),
-                ),
-              ),
+              child: _buildSettingsIcon(isGlowing),
             ),
           ],
         ),
@@ -358,12 +333,158 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
+  Widget _buildHistoryButton() {
+    return Focus(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space ||
+              event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                pageBuilder: (_, a, __) => FadeTransition(
+                  opacity: a,
+                  child: HistoryPage(
+                    onBack: () => Navigator.of(context).pop(),
+                  ),
+                ),
+                transitionDuration: const Duration(milliseconds: 300),
+              ),
+            );
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: RecentlyPlayedCard(
+        title: '播放历史',
+        isHistoryButton: true,
+      ),
+    );
+  }
+
+  Widget _buildAddResourceButton(bool isUnlocked) {
+    return Focus(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            _showAddResourceDialog(context);
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.contextMenu ||
+              event.logicalKey == LogicalKeyboardKey.keyM) {
+            if (isUnlocked) _showChangeCodeDialog(context);
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Container(
+        width: 160.w,
+        height: 160.h,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.add_rounded,
+            size: 64.sp,
+            color: const Color(0xFFFF6B35),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsIcon(bool isGlowing) {
+    DateTime? pressStartTime;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Focus(
+          onFocusChange: (focused) {
+            if (focused) pressStartTime = null;
+          },
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.select ||
+                  event.logicalKey == LogicalKeyboardKey.enter ||
+                  event.logicalKey == LogicalKeyboardKey.space) {
+                pressStartTime = DateTime.now();
+                return KeyEventResult.handled;
+              }
+            }
+            if (event is KeyUpEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.select ||
+                  event.logicalKey == LogicalKeyboardKey.enter ||
+                  event.logicalKey == LogicalKeyboardKey.space) {
+                if (pressStartTime != null) {
+                  final duration = DateTime.now().difference(pressStartTime!);
+                  if (duration >= const Duration(seconds: 3)) {
+                    setState(() => _showSecretOverlay = true);
+                    ref.read(stealthProvider.notifier).startUnlockSequence();
+                  } else {
+                    if (!isGlowing) {
+                      Scaffold.of(context).openEndDrawer();
+                    }
+                  }
+                  pressStartTime = null;
+                }
+                return KeyEventResult.handled;
+              }
+            }
+            return KeyEventResult.ignored;
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: 48.w,
+            height: 48.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isGlowing
+                  ? const Color(0xFF9C27B0).withValues(alpha: 0.6)
+                  : Colors.transparent,
+              boxShadow: isGlowing
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF9C27B0).withValues(alpha: 0.8),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Center(
+              child: Icon(
+                Icons.settings,
+                color: isGlowing ? Colors.white : Colors.grey[400],
+                size: 24.sp,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showResourceMenu(StorageNode node) {
+    setState(() {
+      _contextMenuNode = node;
+      _showContextMenu = true;
+    });
+  }
+
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: TextStyle(
+      style: const TextStyle(
         color: Colors.white,
-        fontSize: 20.sp,
+        fontSize: 20,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.2,
       ),
@@ -392,14 +513,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ref.read(stealthProvider.notifier).verifyCode(code);
       _keyBuffer.clear();
     }
-  }
-
-  void _showStealthInputDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const StealthDialog(),
-    );
   }
 
   void _showAddResourceDialog(BuildContext context) {
@@ -464,9 +577,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     backgroundColor: Colors.white,
                   ),
                   SizedBox(height: 8.h),
-                  Text(
+                  const Text(
                     '扫码编辑',
-                    style: TextStyle(color: Colors.grey, fontSize: 12.sp),
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
@@ -506,58 +619,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('开始录制'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsDrawer() {
-    return Drawer(
-      backgroundColor: const Color(0xFF141414),
-      child: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '设置',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 32.h),
-              _buildSettingItem(Icons.wifi, 'WebSocket 同步', 'ws://0.0.0.0:${AppConstants.wsPort}'),
-              _buildSettingItem(Icons.devices, '设备 ID', 'tv-living-room'),
-              _buildSettingItem(Icons.sync, '云端同步', '已启用'),
-              const Spacer(),
-              Text(
-                AppConstants.appName,
-                style: TextStyle(color: Colors.grey, fontSize: 14.sp),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingItem(IconData icon, String title, String value) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 24.h),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFFFF6B35), size: 24.sp),
-          SizedBox(width: 16.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: TextStyle(color: Colors.white, fontSize: 16.sp)),
-              Text(value, style: TextStyle(color: Colors.grey, fontSize: 12.sp)),
-            ],
           ),
         ],
       ),

@@ -7,6 +7,7 @@ class FavoriteCard extends StatefulWidget {
   final String? posterUrl;
   final IconData icon;
   final VoidCallback? onSelect;
+  final VoidCallback? onMenu;
 
   const FavoriteCard({
     super.key,
@@ -14,6 +15,7 @@ class FavoriteCard extends StatefulWidget {
     this.posterUrl,
     this.icon = Icons.folder,
     this.onSelect,
+    this.onMenu,
   });
 
   @override
@@ -33,12 +35,26 @@ class _FavoriteCardState extends State<FavoriteCard> {
         widget.onSelect?.call();
         return KeyEventResult.handled;
       }
+      if (event.logicalKey == LogicalKeyboardKey.contextMenu ||
+          event.logicalKey == LogicalKeyboardKey.keyM) {
+        widget.onMenu?.call();
+        return KeyEventResult.handled;
+      }
     }
     return KeyEventResult.ignored;
   }
 
   @override
   Widget build(BuildContext context) {
+    final focusShadows = [
+      BoxShadow(
+        color: const Color(0xFFBB86FC).withValues(alpha: 0.3),
+        blurRadius: 15,
+        spreadRadius: 2,
+      ),
+    ];
+    final normalShadows = <BoxShadow>[];
+
     return Focus(
       onFocusChange: (focus) => setState(() => _hasFocus = focus),
       onKeyEvent: _onKeyEvent,
@@ -57,22 +73,13 @@ class _FavoriteCardState extends State<FavoriteCard> {
               color: _hasFocus ? const Color(0xFFBB86FC) : Colors.white10,
               width: _hasFocus ? 3.w : 1.w,
             ),
-            boxShadow: _hasFocus
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFFBB86FC).withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                : [],
+            boxShadow: _hasFocus ? focusShadows : normalShadows,
           ),
           clipBehavior: Clip.antiAlias,
           child: Stack(
             fit: StackFit.expand,
             children: [
               _buildBackground(),
-
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -91,7 +98,6 @@ class _FavoriteCardState extends State<FavoriteCard> {
                   ),
                 ),
               ),
-
               Positioned(
                 bottom: 8.h,
                 left: 8.w,
@@ -108,7 +114,6 @@ class _FavoriteCardState extends State<FavoriteCard> {
                   ),
                 ),
               ),
-
               if (_hasFocus)
                 Positioned(
                   top: 8.h,

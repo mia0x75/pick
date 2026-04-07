@@ -30,8 +30,9 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
   Timer? _previewTimer;
   bool _showVideoPreview = false;
 
-  final double _collapsedHeight = 120.h;
-  final double _expandedHeight = 400.h;
+  final double _collapsedWidth = 180.w;
+  final double _expandedWidth = 711.w;
+  final double _cardHeight = 400.h;
 
   @override
   void dispose() {
@@ -77,7 +78,8 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
-        height: _hasFocus ? _expandedHeight : _collapsedHeight,
+        width: _hasFocus ? _expandedWidth : _collapsedWidth,
+        height: _cardHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16.r),
           color: const Color(0xFF1E1E1E),
@@ -148,11 +150,11 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
                       widget.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 28.sp,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        shadows: const [
+                        shadows: [
                           Shadow(color: Colors.black, blurRadius: 4),
                         ],
                       ),
@@ -167,7 +169,7 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
                               value: widget.progress,
                               backgroundColor: Colors.white30,
                               valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Color(0xFFBB86FC),
+                                Color(0xFFBB86FC),
                               ),
                               minHeight: 6.h,
                             ),
@@ -176,9 +178,9 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
                         SizedBox(width: 16.w),
                         Text(
                           '${(widget.progress * 100).toInt()}%',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white70,
-                            fontSize: 14.sp,
+                            fontSize: 14,
                           ),
                         ),
                       ],
@@ -195,9 +197,9 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
                 child: Center(
                   child: Text(
                     '查看完整播放历史',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 24.sp,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
                     ),

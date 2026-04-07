@@ -43,6 +43,16 @@ class _ResourceCardState extends State<ResourceCard> {
 
   @override
   Widget build(BuildContext context) {
+    final protocolColor = _getProtocolColor();
+    final focusShadows = [
+      BoxShadow(
+        color: protocolColor.withValues(alpha: 0.3),
+        blurRadius: 15,
+        spreadRadius: 2,
+      ),
+    ];
+    final normalShadows = <BoxShadow>[];
+
     return Focus(
       onFocusChange: (focus) => setState(() => _hasFocus = focus),
       onKeyEvent: _onKeyEvent,
@@ -56,20 +66,12 @@ class _ResourceCardState extends State<ResourceCard> {
           height: _cardSize,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12.r),
-            color: _getProtocolColor().withValues(alpha: _hasFocus ? 0.2 : 0.1),
+            color: protocolColor.withValues(alpha: _hasFocus ? 0.2 : 0.1),
             border: Border.all(
-              color: _hasFocus ? _getProtocolColor() : Colors.white10,
+              color: _hasFocus ? protocolColor : Colors.white10,
               width: _hasFocus ? 3.w : 1.w,
             ),
-            boxShadow: _hasFocus
-                ? [
-                    BoxShadow(
-                      color: _getProtocolColor().withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      spreadRadius: 2,
-                    ),
-                  ]
-                : [],
+            boxShadow: _hasFocus ? focusShadows : normalShadows,
           ),
           child: Stack(
             children: [
@@ -77,7 +79,7 @@ class _ResourceCardState extends State<ResourceCard> {
                 child: Icon(
                   _getProtocolIcon(),
                   size: 64.sp,
-                  color: _hasFocus ? _getProtocolColor() : Colors.white38,
+                  color: _hasFocus ? protocolColor : Colors.white38,
                 ),
               ),
               if (widget.node.isPrivate)
