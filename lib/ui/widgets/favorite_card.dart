@@ -1,85 +1,151 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
-import '../widgets/focusable_card.dart';
-
-class FavoriteCard extends StatelessWidget {
+class FavoriteCard extends StatefulWidget {
   final String name;
   final String? posterUrl;
-  final IconData? icon;
+  final IconData icon;
   final VoidCallback? onSelect;
-  final VoidCallback? onMenu;
 
   const FavoriteCard({
     super.key,
     required this.name,
     this.posterUrl,
-    this.icon,
+    this.icon = Icons.folder,
     this.onSelect,
-    this.onMenu,
   });
 
   @override
+  State<FavoriteCard> createState() => _FavoriteCardState();
+}
+
+class _FavoriteCardState extends State<FavoriteCard> {
+  bool _hasFocus = false;
+
+  final double _cardSize = 160.w;
+
+  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent || event is KeyRepeatEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.select ||
+          event.logicalKey == LogicalKeyboardKey.enter ||
+          event.logicalKey == LogicalKeyboardKey.space) {
+        widget.onSelect?.call();
+        return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FocusableCard(
-      onSelect: onSelect,
-      onMenu: onMenu,
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: posterUrl != null && posterUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: posterUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(color: const Color(0xFF1A1A1A)),
-                    errorWidget: (_, __, ___) => _buildIcon(),
-                  )
-                : _buildIcon(),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.8),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-              child: Text(
-                name,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+    return Focus(
+      onFocusChange: (focus) => setState(() => _hasFocus = focus),
+      onKeyEvent: _onKeyEvent,
+      child: AnimatedScale(
+        scale: _hasFocus ? 1.1 : 1.0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          width: _cardSize,
+          height: _cardSize,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12.r),
+            color: const Color(0xFF1E1E1E),
+            border: Border.all(
+              color: _hasFocus ? const Color(0xFFBB86FC) : Colors.white10,
+              width: _hasFocus ? 3.w : 1.w,
             ),
+            boxShadow: _hasFocus
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFBB86FC).withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    )
+                  ]
+                : [],
           ),
-        ],
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _buildBackground(),
+
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: _cardSize * 0.25,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.8),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              Positioned(
+                bottom: 8.h,
+                left: 8.w,
+                right: 8.w,
+                child: Text(
+                  widget.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: _hasFocus ? Colors.white : Colors.white70,
+                    fontSize: 14.sp,
+                    fontWeight: _hasFocus ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+
+              if (_hasFocus)
+                Positioned(
+                  top: 8.h,
+                  right: 8.w,
+                  child: Icon(
+                    Icons.star,
+                    color: const Color(0xFFBB86FC),
+                    size: 16.sp,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildIcon() {
-    return Container(
-      color: const Color(0xFF1A1A1A),
-      child: Center(
-        child: Icon(
-          icon ?? Icons.folder,
-          color: const Color(0xFFFF6B35),
-          size: 48.sp,
+  Widget _buildBackground() {
+    if (widget.posterUrl != null && widget.posterUrl!.isNotEmpty) {
+      return Opacity(
+        opacity: _hasFocus ? 1.0 : 0.7,
+        child: Image.network(
+          widget.posterUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildIconFallback(),
         ),
+      );
+    }
+    return _buildIconFallback();
+  }
+
+  Widget _buildIconFallback() {
+    return Center(
+      child: Icon(
+        widget.icon,
+        color: _hasFocus ? Colors.white54 : Colors.white24,
+        size: 48.sp,
       ),
     );
   }

@@ -1,60 +1,72 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import '../../shared/constants.dart';
 
 class RecentlyPlayedCard extends StatefulWidget {
   final String title;
   final String? posterUrl;
   final String? previewUrl;
-  final double? progress;
-  final VoidCallback? onSelect;
+  final double progress;
   final bool isHistoryButton;
+  final VoidCallback? onSelect;
 
   const RecentlyPlayedCard({
     super.key,
     required this.title,
     this.posterUrl,
     this.previewUrl,
-    this.progress,
-    this.onSelect,
+    this.progress = 0.0,
     this.isHistoryButton = false,
+    this.onSelect,
   });
 
   @override
   State<RecentlyPlayedCard> createState() => _RecentlyPlayedCardState();
 }
 
-class _RecentlyPlayedCardState extends State<RecentlyPlayedCard>
-    with SingleTickerProviderStateMixin {
-  bool _isFocused = false;
-  late AnimationController _animationController;
+class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
+  bool _hasFocus = false;
+  Timer? _previewTimer;
+  bool _showVideoPreview = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: AppConstants.row1AnimationDuration,
-    );
-  }
+  final double _collapsedWidth = 180.w;
+  final double _expandedWidth = 711.w;
+  final double _cardHeight = 400.h;
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _previewTimer?.cancel();
     super.dispose();
   }
 
-  void _onFocusChange(bool focused) {
-    if (_isFocused != focused) {
-      setState(() {
-        _isFocused = focused;
-      });
-      if (focused) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
+  KeyEventResult _onKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is KeyDownEvent || event is KeyRepeatEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.select ||
+          event.logicalKey == LogicalKeyboardKey.enter ||
+          event.logicalKey == LogicalKeyboardKey.space) {
+        widget.onSelect?.call();
+        return KeyEventResult.handled;
       }
+    }
+    return KeyEventResult.ignored;
+  }
+
+  void _onFocusChange(bool hasFocus) {
+    setState(() {
+      _hasFocus = hasFocus;
+      _showVideoPreview = false;
+    });
+
+    _previewTimer?.cancel();
+    if (hasFocus && !widget.isHistoryButton) {
+      _previewTimer = Timer(const Duration(seconds: 1), () {
+        if (mounted && _hasFocus) {
+          setState(() {
+            _showVideoPreview = true;
+          });
+        }
+      });
     }
   }
 
@@ -62,99 +74,163 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard>
   Widget build(BuildContext context) {
     return Focus(
       onFocusChange: _onFocusChange,
-      child: RepaintBoundary(
-        child: AnimatedContainer(
-          duration: AppConstants.row1AnimationDuration,
-          curve: Curves.easeOutCubic,
-          width: _isFocused
-              ? AppConstants.row1ExpandedWidth.w
-              : AppConstants.row1CollapsedWidth.w,
-          height: AppConstants.row1Height.h,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
-            border: Border.all(
-              color: _isFocused ? const Color(0xFFFF6B35) : Colors.transparent,
-              width: 2,
-            ),
-            boxShadow: _isFocused
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFFFF6B35).withValues(alpha: 0.4),
-                      blurRadius: 16,
-                      spreadRadius: 2,
-                    ),
-                  ]
-                : [],
+      onKeyEvent: _onKeyEvent,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        width: _hasFocus ? _expandedWidth : _collapsedWidth,
+        height: _cardHeight,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16.r),
+          color: const Color(0xFF1E1E1E),
+          border: Border.all(
+            color: _hasFocus ? const Color(0xFFBB86FC) : Colors.transparent,
+            width: _hasFocus ? 3.w : 0,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (widget.posterUrl != null && widget.posterUrl!.isNotEmpty)
-                  Image.network(
-                    widget.posterUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildPlaceholder(),
+          boxShadow: _hasFocus
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFBB86FC).withValues(alpha: 0.4),
+                    blurRadius: 20,
+                    spreadRadius: 4,
+                    offset: const Offset(0, 8),
                   )
-                else
-                  _buildPlaceholder(),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.8),
-                        Colors.transparent,
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildBackground(),
+
+            if (_showVideoPreview && _hasFocus)
+              Container(
+                color: Colors.black,
+                child: const Center(
+                  child: Icon(Icons.volume_off, color: Colors.white54, size: 48),
+                ),
+              ),
+
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _hasFocus ? 1.0 : 0.0,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.2),
+                      Colors.black.withValues(alpha: 0.9),
+                    ],
+                    stops: const [0.5, 0.7, 1.0],
+                  ),
+                ),
+              ),
+            ),
+
+            if (_hasFocus && !widget.isHistoryButton)
+              Positioned(
+                left: 24.w,
+                right: 24.w,
+                bottom: 24.h,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.bold,
+                        shadows: const [
+                          Shadow(color: Colors.black, blurRadius: 4)
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4.r),
+                            child: LinearProgressIndicator(
+                              value: widget.progress,
+                              backgroundColor: Colors.white30,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFBB86FC)),
+                              minHeight: 6.h,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 16.w),
+                        Text(
+                          '${(widget.progress * 100).toInt()}%',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14.sp,
+                          ),
+                        ),
                       ],
+                    ),
+                  ],
+                ),
+              ),
+
+            if (_hasFocus && widget.isHistoryButton)
+              Positioned(
+                bottom: 32.h,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Text(
+                    '查看完整播放历史',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24.sp,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
                     ),
                   ),
                 ),
-                if (widget.progress != null && !widget.isHistoryButton)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: LinearProgressIndicator(
-                      value: widget.progress!,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
-                      minHeight: 3,
-                    ),
-                  ),
-                if (_isFocused)
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    right: 8,
-                    child: Text(
-                      widget.title,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-            ),
-          ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildPlaceholder() {
-    return Container(
-      color: const Color(0xFF1A1A1A),
-      child: Center(
-        child: widget.isHistoryButton
-            ? const Icon(Icons.history, color: Colors.grey, size: 48)
-            : const Icon(Icons.movie, color: Colors.grey, size: 48),
-      ),
-    );
+  Widget _buildBackground() {
+    if (widget.isHistoryButton) {
+      return Center(
+        child: Icon(
+          Icons.history,
+          color: _hasFocus ? Colors.white : Colors.grey,
+          size: _hasFocus ? 80.sp : 64.sp,
+        ),
+      );
+    }
+
+    if (widget.posterUrl != null && widget.posterUrl!.isNotEmpty) {
+      return Container(
+        color: const Color(0xFF2C2C2C),
+        child: const Center(
+          child: Text('Poster Image', style: TextStyle(color: Colors.white38)),
+        ),
+      );
+    }
+
+    return Container(color: const Color(0xFF2C2C2C));
   }
 }
