@@ -36,9 +36,6 @@ jobs:
     name: Build Debug APK
     needs: analyze
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        abi: [arm64-v8a, armeabi-v7a]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,13 +56,13 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build Debug APK (${{ matrix.abi }})
-        run: flutter build apk --debug --target-platform android-${{ matrix.abi == 'arm64-v8a' && 'arm64' || 'arm' }}
+      - name: Build Debug APK
+        run: flutter build apk --debug --target-platform android-arm64
 
-      - name: Upload Debug APK (${{ matrix.abi }})
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: pick-player-debug-${{ matrix.abi }}
+          name: pick-player-debug-arm64-v8a
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
 
@@ -74,9 +71,6 @@ jobs:
     needs: analyze
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        abi: [arm64-v8a, armeabi-v7a]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -112,13 +106,13 @@ jobs:
             echo "storeFile=keystore.jks" >> android/key.properties
           fi
 
-      - name: Build Release APK (${{ matrix.abi }})
-        run: flutter build apk --release --target-platform android-${{ matrix.abi == 'arm64-v8a' && 'arm64' || 'arm' }}
+      - name: Build Release APK
+        run: flutter build apk --release --target-platform android-arm64
 
-      - name: Upload Release APK (${{ matrix.abi }})
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: pick-player-release-${{ matrix.abi }}
+          name: pick-player-release-arm64-v8a
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 90
 
