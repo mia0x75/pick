@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:flutter_bugly/flutter_bugly.dart';
 
 import 'core/services/webdav_service.dart';
 import 'core/services/smb_service.dart';
@@ -17,97 +17,39 @@ import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';
 
-/// Local crash logger — writes crash reports to a file, readable on next launch.
-class _CrashLogger {
-  static const _crashFile = '/data/data/com.mxu.pick/crash.log';
+void main() {
+  FlutterBugly.postCatchedException(() {
+    runZonedGuarded(() async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  static void init() {
-    // Catch Flutter errors
-    FlutterError.onError = (details) {
-      _writeCrash('FlutterError', details.exceptionAsString(), details.stack);
-    };
+      MediaKit.ensureInitialized();
 
-    // Catch all other uncaught errors
-    PlatformDispatcher.instance.onError = (error, stack) {
-      _writeCrash('PlatformDispatcher', error.toString(), stack);
-      return true;
-    };
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
 
-    // Catch native crashes via logcat
-    _writeCrash('AppStart', 'App launched at ${DateTime.now().toIso8601String()}', null);
-  }
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  static void _writeCrash(String source, String error, StackTrace? stack) {
-    try {
-      final file = File(_crashFile);
-      final log = '''
-========================================
-CRASH REPORT — ${DateTime.now().toIso8601String()}
-========================================
-Source: $source
-Error:  $error
-Stack:
-${stack?.toString() ?? '(no stack trace)'}
-========================================
+      await Hive.initFlutter();
+      await _openHiveBoxes();
 
-''';
-      file.writeAsStringSync(log, mode: FileMode.append);
-    } catch (e) {
-      // If we can't write the crash log, print it
-      debugPrint('Failed to write crash log: $e');
-      debugPrint('$source: $error');
-      debugPrint('$stack');
-    }
-  }
+      FlutterBugly.init(
+        androidAppId: '75b96efd9c',
+        appKey: '59e9d4d6-5001-4e8c-9f15-86e931217e2c',
+        channel: 'pick_player',
+        autoCheckUpgrade: false,
+      );
 
-  static String? readCrashLog() {
-    try {
-      final file = File(_crashFile);
-      if (file.existsSync()) {
-        return file.readAsStringSync();
-      }
-    } catch (e) {
-      debugPrint('Failed to read crash log: $e');
-    }
-    return null;
-  }
-
-  static void clearCrashLog() {
-    try {
-      final file = File(_crashFile);
-      if (file.existsSync()) {
-        file.deleteSync();
-      }
-    } catch (e) {
-      // Ignore
-    }
-  }
-}
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize crash logger first
-  _CrashLogger.init();
-
-  try {
-    MediaKit.ensureInitialized();
-
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-    await Hive.initFlutter();
-    await _openHiveBoxes();
-  } catch (e, st) {
-    _CrashLogger._writeCrash('Init', '$e', st);
-    rethrow;
-  }
-
-  runApp(const ProviderScope(child: PickPlayerApp()));
+      runApp(const ProviderScope(child: PickPlayerApp()));
+    }, (error, stackTrace) {
+      FlutterBugly.uploadException(
+        type: error.runtimeType.toString(),
+        message: error.toString(),
+        detail: stackTrace.toString(),
+      );
+    });
+  });
 }
 
 Future<void> _openHiveBoxes() async {
@@ -146,26 +88,51 @@ class _PickPlayerAppState extends ConsumerState<PickPlayerApp> {
       await _webdavService.init();
     } catch (e, st) {
       debugPrint('WebDAV init error: $e\n$st');
+      FlutterBugly.uploadException(
+        type: 'WebDAVInit',
+        message: '$e',
+        detail: '$st',
+      );
     }
     try {
       await _smbService.init();
     } catch (e, st) {
       debugPrint('SMB init error: $e\n$st');
+      FlutterBugly.uploadException(
+        type: 'SMBInit',
+        message: '$e',
+        detail: '$st',
+      );
     }
     try {
       await _btService.init();
     } catch (e, st) {
       debugPrint('Bluetooth init error: $e\n$st');
+      FlutterBugly.uploadException(
+        type: 'BluetoothInit',
+        message: '$e',
+        detail: '$st',
+      );
     }
     try {
       await _wsService.startServer();
     } catch (e, st) {
       debugPrint('WebSocket init error: $e\n$st');
+      FlutterBugly.uploadException(
+        type: 'WebSocketInit',
+        message: '$e',
+        detail: '$st',
+      );
     }
     try {
       await _syncManager.init();
     } catch (e, st) {
       debugPrint('Sync init error: $e\n$st');
+      FlutterBugly.uploadException(
+        type: 'SyncInit',
+        message: '$e',
+        detail: '$st',
+      );
     }
   }
 
