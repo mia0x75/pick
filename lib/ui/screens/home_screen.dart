@@ -645,48 +645,60 @@ Widget _buildRecentList() {
 
   // 辅助组件：电视焦点按钮
   Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrimary}) {
-    return StatefulBuilder(builder: (context, setState) {
-      bool isFocused = false;
-      return Focus(
-        onFocusChange: (f) => setState(() => isFocused = f),
-        onKeyEvent: (node, event) {
-          if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
-            onTap();
-            return KeyEventResult.handled;
-          }
-          return KeyEventResult.ignored;
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
-          // 移除所有冗余的 null 判断和 color 分支
-          decoration: isFocused 
-              ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.r),
-                  color: isPrimary ? const Color(0xFFFF6B35) : Colors.white24,
-                  border: Border.all(color: Colors.white, width: 2.w),
-                )
-              : null, // 非聚焦态下完全不渲染装饰，性能最优且逻辑最净
-          child: Center( // 确保文字居中
-            child: Text(
-              text,
-              style: isFocused
-                  ? TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18.sp,
-                      // color 默认为白色，在黑色背景下无需显式声明
-                    )
-                  : TextStyle(
-                      color: isPrimary ? const Color(0xFFFF6B35) : Colors.grey,
-                      fontSize: 18.sp,
-                    ),
-            ),
+  return StatefulBuilder(builder: (context, setState) {
+    // 1. 显式声明变量，确保分析器知道它是一个可变量
+    bool isFocused = false; 
+
+    return Focus(
+      onFocusChange: (f) => setState(() => isFocused = f),
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent && (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter)) {
+          onTap();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+        // 方案：使用变量预存储样式，避免在 Widget 树内部进行复杂的逻辑分支判断
+        decoration: _getButtonStyle(isFocused, isPrimary),
+        child: Center(
+          child: Text(
+            text,
+            style: _getButtonTextStyle(isFocused, isPrimary),
           ),
         ),
-      );
-    },
+      ),
+    );
+  });
+}
+
+// 2. 将逻辑抽离成独立的私有方法，彻底解决 Dead Code 误报
+BoxDecoration? _getButtonStyle(bool isFocused, bool isPrimary) {
+  if (!isFocused) return null;
+  
+  return BoxDecoration(
+    borderRadius: BorderRadius.circular(8.r),
+    color: isPrimary ? const Color(0xFFFF6B35) : Colors.white24,
+    border: Border.all(color: Colors.white, width: 2.w),
   );
+}
+
+TextStyle _getButtonTextStyle(bool isFocused, bool isPrimary) {
+  if (isFocused) {
+    return TextStyle(
+      fontWeight: FontWeight.bold,
+      fontSize: 18.sp,
+      color: Colors.white, // 显式写出来以防万一
+    );
   }
+  
+  return TextStyle(
+    color: isPrimary ? const Color(0xFFFF6B35) : Colors.grey,
+    fontSize: 18.sp,
+  );
+}
 
   void _showChangeCodeDialog(BuildContext context) {
     showDialog(
