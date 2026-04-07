@@ -42,6 +42,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final stealthMode = ref.watch(stealthProvider);
     final nodes = ref.watch(nodeProvider);
     final favorites = ref.watch(favoriteProvider);
+
     final isUnlocked = stealthMode == StealthMode.unlocked;
     final isGlowing = stealthMode == StealthMode.glowing;
 
@@ -59,42 +60,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         endDrawer: _buildSettingsDrawer(),
         body: Stack(
           children: [
-            // Background image
+            // 1. 沉浸式背景层
             Image.asset(
               'assets/images/splash_background.png',
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
             ),
-            Container(color: Colors.black.withValues(alpha: 0.6)),
-            // Main content
+            Container(color: Colors.black.withValues(alpha: 0.7)),
+
+            // 2. 主内容区（固定一屏，无滚动）
             SafeArea(
-              child: SingleChildScrollView(
+              child: Padding(
                 padding: EdgeInsets.only(
-                  left: AppConstants.tvEdgePadding.w,
-                  right: AppConstants.tvEdgePadding.w,
-                  top: AppConstants.tvTopPadding.h,
-                  bottom: 48.h,
+                  left: 96.w,
+                  right: 96.w,
+                  top: 54.h,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Row 1: Recently Played (Accordion)
+                    // --- Row 1: Recently Played ---
                     RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '最近播放',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: AppConstants.rowSpacing.h),
+                          _buildSectionTitle('最近播放'),
+                          SizedBox(height: 16.h),
                           SizedBox(
-                            height: AppConstants.row1Height.h,
+                            height: 400.h,
                             child: _recentItems.isEmpty
                                 ? Center(
                                     child: Column(
@@ -109,12 +103,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 : ListView.builder(
                                     controller: _row1Controller,
                                     scrollDirection: Axis.horizontal,
+                                    clipBehavior: Clip.none,
                                     itemCount: _recentItems.length + 1,
                                     itemBuilder: (_, index) {
                                       if (index == _recentItems.length) {
                                         return Padding(
-                                          padding: EdgeInsets.only(right: 16.w),
-                                          child: RecentlyPlayedCard(
+                                          padding: EdgeInsets.only(right: 24.w),
+                                          child: const RecentlyPlayedCard(
                                             title: '播放历史',
                                             isHistoryButton: true,
                                           ),
@@ -122,7 +117,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       }
                                       final item = _recentItems[index];
                                       return Padding(
-                                        padding: EdgeInsets.only(right: 16.w),
+                                        padding: EdgeInsets.only(right: 24.w),
                                         child: RecentlyPlayedCard(
                                           title: item['title'],
                                           posterUrl: item['poster'],
@@ -137,24 +132,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
 
-                    SizedBox(height: AppConstants.rowSpacing.h),
+                    SizedBox(height: 32.h),
 
-                    // Row 2: Favorites
+                    // --- Row 2: Favorites ---
                     RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '快捷路径',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22.sp,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: AppConstants.rowSpacing.h),
+                          _buildSectionTitle('快捷路径'),
+                          SizedBox(height: 16.h),
                           SizedBox(
-                            height: AppConstants.row23CardHeight.h,
+                            height: 160.h,
                             child: favorites.isEmpty
                                 ? Center(
                                     child: Column(
@@ -169,13 +157,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 : ListView.builder(
                                     controller: _row2Controller,
                                     scrollDirection: Axis.horizontal,
+                                    clipBehavior: Clip.none,
                                     itemCount: favorites.length,
                                     itemBuilder: (_, index) {
                                       final fav = favorites[index];
                                       return Padding(
-                                        padding: EdgeInsets.only(right: 16.w),
+                                        padding: EdgeInsets.only(right: 20.w),
                                         child: SizedBox(
-                                          width: AppConstants.row23CardWidth.w,
+                                          width: 160.w,
                                           child: FavoriteCard(
                                             name: fav.name,
                                             posterUrl: fav.posterUrl,
@@ -190,58 +179,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
 
-                    SizedBox(height: AppConstants.rowSpacing.h),
+                    SizedBox(height: 32.h),
 
-                    // Row 3: Resources
+                    // --- Row 3: Resources ---
                     RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Text(
-                                '资源中心',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              _buildSectionTitle('资源中心'),
                               if (!isUnlocked)
                                 Padding(
                                   padding: EdgeInsets.only(left: 8.w),
-                                  child: Icon(
-                                    Icons.lock_outline,
-                                    color: Colors.grey,
-                                    size: 18.sp,
-                                  ),
+                                  child: Icon(Icons.lock_outline, color: Colors.grey, size: 18.sp),
                                 ),
                             ],
                           ),
-                          SizedBox(height: AppConstants.rowSpacing.h),
+                          SizedBox(height: 16.h),
                           SizedBox(
-                            height: AppConstants.row23CardHeight.h,
+                            height: 160.h,
                             child: ListView.builder(
                               controller: _row3Controller,
                               scrollDirection: Axis.horizontal,
+                              clipBehavior: Clip.none,
                               itemCount: visibleNodes.length + 1,
                               itemBuilder: (_, index) {
                                 if (index == visibleNodes.length) {
                                   return Padding(
-                                    padding: EdgeInsets.only(right: 16.w),
+                                    padding: EdgeInsets.only(right: 20.w),
                                     child: FocusableCard(
                                       onSelect: () => _showAddResourceDialog(context),
-                                      onMenu: isUnlocked
-                                          ? () => _showChangeCodeDialog(context)
-                                          : null,
-                                      child: SizedBox(
-                                        width: AppConstants.row23CardWidth.w,
+                                      onMenu: isUnlocked ? () => _showChangeCodeDialog(context) : null,
+                                      onLongSelect: isUnlocked ? () => _showChangeCodeDialog(context) : null,
+                                      child: Container(
+                                        width: 160.w,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF1E1E1E),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
                                         child: Center(
-                                          child: Icon(
-                                            Icons.add,
-                                            color: const Color(0xFFFF6B35),
-                                            size: 48.sp,
-                                          ),
+                                          child: Icon(Icons.add, color: const Color(0xFFFF6B35), size: 48.sp),
                                         ),
                                       ),
                                     ),
@@ -249,9 +227,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 }
                                 final node = visibleNodes[index];
                                 return Padding(
-                                  padding: EdgeInsets.only(right: 16.w),
+                                  padding: EdgeInsets.only(right: 20.w),
                                   child: SizedBox(
-                                    width: AppConstants.row23CardWidth.w,
+                                    width: 160.w,
                                     child: ResourceCard(node: node),
                                   ),
                                 );
@@ -265,10 +243,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
-            // Top-right settings icon
+
+            // 3. 顶部右上角设置图标
             Positioned(
-              top: AppConstants.tvTopPadding.h,
-              right: AppConstants.tvEdgePadding.w,
+              top: 54.h,
+              right: 96.w,
               child: FocusableCard(
                 width: 48.w,
                 height: 48.h,
@@ -302,7 +281,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Center(
                     child: Icon(
                       Icons.settings,
-                      color: isGlowing ? Colors.white : Colors.grey,
+                      color: isGlowing ? Colors.white : Colors.grey[400],
                       size: 24.sp,
                     ),
                   ),
@@ -311,6 +290,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 20.sp,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.2,
       ),
     );
   }
