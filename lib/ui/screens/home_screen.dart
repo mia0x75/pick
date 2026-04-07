@@ -644,7 +644,7 @@ Widget _buildRecentList() {
   }
 
   // 辅助组件：电视焦点按钮
-  Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrimary}) {
+Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrimary}) {
   return StatefulBuilder(builder: (context, setState) {
     // 1. 显式声明变量，确保分析器知道它是一个可变量
     bool isFocused = false; 
@@ -671,7 +671,8 @@ Widget _buildRecentList() {
         ),
       ),
     );
-  });
+  },
+  );
 }
 
 // 2. 将逻辑抽离成独立的私有方法，彻底解决 Dead Code 误报
