@@ -54,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 // App icon
                 Image.asset(
-                  'assets/images/app_icon.jpg',
+                  'assets/images/app_icon.png',
                   width: 120,
                   height: 120,
                 ),

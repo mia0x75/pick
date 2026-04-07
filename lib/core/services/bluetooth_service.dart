@@ -10,6 +10,7 @@ class BluetoothService {
   bool _isNear = false;
   int _nearSampleCount = 0;
   DateTime? _lastDeviceSeen;
+  bool _isAvailable = false;
 
   bool get isNear => _isNear;
 
@@ -17,18 +18,23 @@ class BluetoothService {
   final StreamController<bool> _nearController = StreamController<bool>.broadcast();
 
   Future<void> init() async {
-    // Start periodic BLE scanning
-    _heartbeatTimer = Timer.periodic(
-      AppConstants.bluetoothScanInterval,
-      (_) => _scanForDevice(),
-    );
+    try {
+      _isAvailable = await FlutterBluePlus.isSupported;
+      if (!_isAvailable) return;
+
+      _heartbeatTimer = Timer.periodic(
+        AppConstants.bluetoothScanInterval,
+        (_) => _scanForDevice(),
+      );
+    } catch (e) {
+      // BLE not available on this device (common on Android TV)
+      _isAvailable = false;
+    }
   }
 
   Future<void> _scanForDevice() async {
+    if (!_isAvailable) return;
     try {
-      // Load target device ID from settings
-      // Placeholder: actual device ID stored in Hive
-
       await FlutterBluePlus.startScan(timeout: const Duration(seconds: 4));
 
       _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
@@ -38,11 +44,10 @@ class BluetoothService {
         }
       });
 
-      // Stop scanning after timeout
       await Future.delayed(const Duration(seconds: 4));
       await FlutterBluePlus.stopScan();
     } catch (e) {
-      // BLE not available or permission denied
+      // BLE scan failed (permission denied or hardware unavailable)
     }
   }
 
@@ -55,13 +60,11 @@ class BluetoothService {
       _nearSampleCount = 0;
     }
 
-    // Check if we have enough consecutive near samples
     if (_nearSampleCount >= AppConstants.rssiSampleCount && !_isNear) {
       _isNear = true;
       _nearController.add(true);
     }
 
-    // Check if device disappeared
     if (_lastDeviceSeen != null) {
       final elapsed = DateTime.now().difference(_lastDeviceSeen!);
       if (elapsed > AppConstants.bluetoothDisappearTimeout && _isNear) {
