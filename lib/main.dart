@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'core/services/webdav_service.dart';
 import 'core/services/smb_service.dart';
@@ -14,7 +16,7 @@ import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
 
@@ -28,7 +30,17 @@ void main() async {
   await Hive.initFlutter();
   await _openHiveBoxes();
 
-  runApp(const ProviderScope(child: PickPlayerApp()));
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = const String.fromEnvironment(
+        'SENTRY_DSN',
+        defaultValue: '',
+      );
+      options.tracesSampleRate = 1.0;
+      options.profilesSampleRate = 1.0;
+    },
+    appRunner: () => runApp(const ProviderScope(child: PickPlayerApp())),
+  );
 }
 
 Future<void> _openHiveBoxes() async {
@@ -63,11 +75,31 @@ class _PickPlayerAppState extends ConsumerState<PickPlayerApp> {
   }
 
   Future<void> _initServices() async {
-    await _webdavService.init();
-    await _smbService.init();
-    await _btService.init();
-    await _wsService.startServer();
-    await _syncManager.init();
+    try {
+      await _webdavService.init();
+    } catch (e, st) {
+      Sentry.captureException(e, stackTrace: st);
+    }
+    try {
+      await _smbService.init();
+    } catch (e, st) {
+      Sentry.captureException(e, stackTrace: st);
+    }
+    try {
+      await _btService.init();
+    } catch (e, st) {
+      Sentry.captureException(e, stackTrace: st);
+    }
+    try {
+      await _wsService.startServer();
+    } catch (e, st) {
+      Sentry.captureException(e, stackTrace: st);
+    }
+    try {
+      await _syncManager.init();
+    } catch (e, st) {
+      Sentry.captureException(e, stackTrace: st);
+    }
   }
 
   @override
