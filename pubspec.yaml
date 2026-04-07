@@ -1,0 +1,63 @@
+name: pick_player
+description: Pick 片刻 — 极简 Android TV 播放器，直达内容，隐形安全，云端同步。
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Media playback
+  media_kit: ^1.1.10+1
+  media_kit_video: ^1.2.4
+  media_kit_libs_video: ^1.0.8
+
+  # Local storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Network protocols
+  webdav_client: ^1.2.2
+  smb_connector: ^0.0.4
+  ftpconnect: ^2.5.0
+  flutter_blue_plus: ^1.31.15
+  bonsoir: ^5.1.10
+
+  # UI & utilities
+  cached_network_image: ^3.3.1
+  flutter_screenutil: ^5.9.0
+  go_router: ^13.2.0
+  palette_generator: ^0.4.11
+  qr_flutter: ^4.1.0
+
+  # State management
+  riverpod: ^2.5.0
+  flutter_riverpod: ^2.5.0
+
+  # WebSocket sync
+  web_socket_channel: ^2.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.8
+  hive_generator: ^2.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/fonts/
+  # Fonts: use system Roboto (built into Android).
+  # To add custom fonts, place .ttf files in assets/fonts/ and uncomment below.
+  # fonts:
+  #   - family: CustomFont
+  #     fonts:
+  #       - asset: assets/fonts/CustomFont-Regular.ttf
+  #       - asset: assets/fonts/CustomFont-Bold.ttf
+  #         weight: 700
