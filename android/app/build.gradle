@@ -64,9 +64,10 @@ android {
         release {
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.release
-            } else {
-                signingConfig = signingConfigs.debug
             }
+            // If no keystore, use default debug signing (auto-generated debug keystore)
+            minifyEnabled false
+            shrinkResources false
         }
     }
 }
