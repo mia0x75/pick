@@ -63,8 +63,8 @@ class _FavoriteCardState extends State<FavoriteCard> {
                       color: const Color(0xFFBB86FC).withValues(alpha: 0.3),
                       blurRadius: 15,
                       spreadRadius: 2,
-                    )
-                  ]
+                    ),
+                  ],
                 : [],
           ),
           clipBehavior: Clip.antiAlias,

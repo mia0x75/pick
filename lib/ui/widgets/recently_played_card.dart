@@ -30,9 +30,8 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
   Timer? _previewTimer;
   bool _showVideoPreview = false;
 
-  final double _collapsedWidth = 180.w;
-  final double _expandedWidth = 711.w;
-  final double _cardHeight = 400.h;
+  final double _collapsedHeight = 120.h;
+  final double _expandedHeight = 400.h;
 
   @override
   void dispose() {
@@ -78,8 +77,7 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
-        width: _hasFocus ? _expandedWidth : _collapsedWidth,
-        height: _cardHeight,
+        height: _hasFocus ? _expandedHeight : _collapsedHeight,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16.r),
           color: const Color(0xFF1E1E1E),
@@ -94,14 +92,14 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
                     blurRadius: 20,
                     spreadRadius: 4,
                     offset: const Offset(0, 8),
-                  )
+                  ),
                 ]
               : [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ],
         ),
         clipBehavior: Clip.antiAlias,
@@ -155,7 +153,7 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
                         fontSize: 28.sp,
                         fontWeight: FontWeight.bold,
                         shadows: const [
-                          Shadow(color: Colors.black, blurRadius: 4)
+                          Shadow(color: Colors.black, blurRadius: 4),
                         ],
                       ),
                     ),
@@ -169,7 +167,8 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
                               value: widget.progress,
                               backgroundColor: Colors.white30,
                               valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Color(0xFFBB86FC)),
+                                  Color(0xFFBB86FC),
+                              ),
                               minHeight: 6.h,
                             ),
                           ),

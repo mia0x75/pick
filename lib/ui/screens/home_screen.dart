@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/providers/stealth_provider.dart';
 import '../../core/providers/node_provider.dart';
 import '../../shared/constants.dart';
-import '../widgets/focusable_card.dart';
+import '../widgets/stripe_background.dart';
 import '../widgets/recently_played_card.dart';
 import '../widgets/favorite_card.dart';
 import '../widgets/resource_card.dart';
@@ -20,20 +21,42 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final ScrollController _row1Controller = ScrollController();
   final ScrollController _row2Controller = ScrollController();
   final ScrollController _row3Controller = ScrollController();
   final List<LogicalKeyboardKey> _keyBuffer = [];
   DateTime? _lastKeyPressTime;
 
+  late AnimationController _flashController;
+  late Animation<double> _flashAnimation;
+
   final List<Map<String, dynamic>> _recentItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _flashController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _flashAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _flashController, curve: Curves.easeOut),
+    );
+    _flashController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _flashController.reverse();
+      }
+    });
+  }
 
   @override
   void dispose() {
     _row1Controller.dispose();
     _row2Controller.dispose();
     _row3Controller.dispose();
+    _flashController.dispose();
     super.dispose();
   }
 
@@ -45,6 +68,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final isUnlocked = stealthMode == StealthMode.unlocked;
     final isGlowing = stealthMode == StealthMode.glowing;
+
+    if (isUnlocked && _flashController.isDismissed) {
+      _flashController.forward();
+    }
 
     final visibleNodes = nodes.where((n) => isUnlocked || !n.isPrivate).toList();
 
@@ -60,27 +87,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         endDrawer: _buildSettingsDrawer(),
         body: Stack(
           children: [
-            // 1. 沉浸式背景层
-            Image.asset(
-              'assets/images/splash_background.png',
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-            ),
-            Container(color: Colors.black.withValues(alpha: 0.7)),
+            // 1. Stripe pattern background
+            const StripeBackground(),
 
-            // 2. 主内容区（固定一屏，无滚动）
+            // 2. Purple flash overlay on stealth unlock
+            AnimatedBuilder(
+              animation: _flashAnimation,
+              builder: (context, child) {
+                return Container(
+                  color: const Color(0xFFBB86FC).withOpacity(
+                    _flashAnimation.value * 0.3,
+                  ),
+                );
+              },
+            ),
+
+            // 3. Main content: three rows, fixed one screen
             SafeArea(
               child: Padding(
                 padding: EdgeInsets.only(
                   left: 96.w,
                   right: 96.w,
                   top: 54.h,
+                  bottom: 54.h,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- Row 1: Recently Played ---
+                    // Row 1: Recently Played (手风琴大图行)
                     RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +143,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       if (index == _recentItems.length) {
                                         return Padding(
                                           padding: EdgeInsets.only(right: 24.w),
-                                          child: const RecentlyPlayedCard(
+                                          child: RecentlyPlayedCard(
                                             title: '播放历史',
                                             isHistoryButton: true,
                                           ),
@@ -134,7 +168,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                     SizedBox(height: 32.h),
 
-                    // --- Row 2: Favorites ---
+                    // Row 2: Favorites (快捷网格行)
                     RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +215,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                     SizedBox(height: 32.h),
 
-                    // --- Row 3: Resources ---
+                    // Row 3: Resources (模块化条纹块)
                     RepaintBoundary(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,18 +242,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 if (index == visibleNodes.length) {
                                   return Padding(
                                     padding: EdgeInsets.only(right: 20.w),
-                                    child: FocusableCard(
-                                      onSelect: () => _showAddResourceDialog(context),
-                                      onMenu: isUnlocked ? () => _showChangeCodeDialog(context) : null,
-                                      onLongSelect: isUnlocked ? () => _showChangeCodeDialog(context) : null,
+                                    child: Focus(
+                                      onFocusChange: (_) {},
+                                      onKeyEvent: (node, event) {
+                                        if (event is KeyDownEvent) {
+                                          if (event.logicalKey == LogicalKeyboardKey.select ||
+                                              event.logicalKey == LogicalKeyboardKey.enter) {
+                                            _showAddResourceDialog(context);
+                                            return KeyEventResult.handled;
+                                          }
+                                          if (event.logicalKey == LogicalKeyboardKey.contextMenu ||
+                                              event.logicalKey == LogicalKeyboardKey.keyM) {
+                                            if (isUnlocked) _showChangeCodeDialog(context);
+                                            return KeyEventResult.handled;
+                                          }
+                                        }
+                                        return KeyEventResult.ignored;
+                                      },
                                       child: Container(
                                         width: 160.w,
+                                        height: 160.h,
                                         decoration: BoxDecoration(
                                           color: const Color(0xFF1E1E1E),
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(12.r),
+                                          border: Border.all(color: Colors.white10),
                                         ),
                                         child: Center(
-                                          child: Icon(Icons.add, color: const Color(0xFFFF6B35), size: 48.sp),
+                                          child: Icon(
+                                            Icons.add_rounded,
+                                            size: 64.sp,
+                                            color: const Color(0xFFFF6B35),
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -244,34 +297,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
-            // 3. 顶部右上角设置图标
+            // 4. Top-right settings icon
             Positioned(
               top: 54.h,
               right: 96.w,
-              child: FocusableCard(
-                width: 48.w,
-                height: 48.h,
-                onSelect: () {
-                  if (isGlowing) {
+              child: Focus(
+                onFocusChange: (focused) {
+                  if (focused && isGlowing) {
                     _showStealthInputDialog(context);
-                  } else {
-                    Scaffold.of(context).openEndDrawer();
                   }
                 },
-                onLongSelect: () {
-                  ref.read(stealthProvider.notifier).startUnlockSequence();
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent) {
+                    if (event.logicalKey == LogicalKeyboardKey.select ||
+                        event.logicalKey == LogicalKeyboardKey.enter) {
+                      if (!isGlowing) {
+                        Scaffold.of(context).openEndDrawer();
+                      }
+                      return KeyEventResult.handled;
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.select ||
+                        event.logicalKey == LogicalKeyboardKey.enter) {
+                      // Long press detection handled by timer
+                    }
+                  }
+                  return KeyEventResult.ignored;
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
+                  width: 48.w,
+                  height: 48.h,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isGlowing
-                        ? const Color(0xFF9C27B0).withValues(alpha: 0.6)
+                        ? const Color(0xFFBB86FC).withOpacity(0.6)
                         : Colors.transparent,
                     boxShadow: isGlowing
                         ? [
                             BoxShadow(
-                              color: const Color(0xFF9C27B0).withValues(alpha: 0.8),
+                              color: const Color(0xFFBB86FC).withOpacity(0.8),
                               blurRadius: 12,
                               spreadRadius: 2,
                             ),

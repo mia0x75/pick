@@ -67,7 +67,7 @@ class _ResourceCardState extends State<ResourceCard> {
                       color: _getProtocolColor().withValues(alpha: 0.3),
                       blurRadius: 15,
                       spreadRadius: 2,
-                    )
+                    ),
                   ]
                 : [],
           ),
