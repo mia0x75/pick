@@ -12,9 +12,9 @@ dependencies:
     sdk: flutter
 
   # Media playback
-  media_kit: ^1.2.6
-  media_kit_video: ^1.2.4
-  media_kit_libs_video: ^1.0.7
+  media_kit: 1.2.6
+  media_kit_video: 1.2.4
+  media_kit_libs_video: 1.0.7
 
   # Local storage
   hive: ^2.2.3
