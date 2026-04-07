@@ -79,7 +79,7 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard>
             boxShadow: _isFocused
                 ? [
                     BoxShadow(
-                      color: const Color(0xFFFF6B35).withOpacity(0.4),
+                      color: const Color(0xFFFF6B35).withValues(alpha: 0.4),
                       blurRadius: 16,
                       spreadRadius: 2,
                     ),
@@ -105,7 +105,7 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard>
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        Colors.black.withOpacity(0.8),
+                        Colors.black.withValues(alpha: 0.8),
                         Colors.transparent,
                       ],
                     ),
@@ -118,7 +118,7 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard>
                     right: 0,
                     child: LinearProgressIndicator(
                       value: widget.progress!,
-                      backgroundColor: Colors.white.withOpacity(0.2),
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
                       valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
                       minHeight: 3,
                     ),

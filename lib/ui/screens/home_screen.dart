@@ -72,7 +72,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               width: double.infinity,
               height: double.infinity,
             ),
-            Container(color: Colors.black.withOpacity(0.6)),
+            Container(color: Colors.black.withValues(alpha: 0.6)),
             // Main content
             SafeArea(
               child: SingleChildScrollView(
@@ -280,12 +280,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isGlowing
-                        ? const Color(0xFF9C27B0).withOpacity(0.6)
+                        ? const Color(0xFF9C27B0).withValues(alpha: 0.6)
                         : Colors.transparent,
                     boxShadow: isGlowing
                         ? [
                             BoxShadow(
-                              color: const Color(0xFF9C27B0).withOpacity(0.8),
+                              color: const Color(0xFF9C27B0).withValues(alpha: 0.8),
                               blurRadius: 12,
                               spreadRadius: 2,
                             ),

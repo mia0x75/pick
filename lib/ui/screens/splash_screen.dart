@@ -45,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
           // Dark overlay for readability
           Container(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
           ),
           // Center content
           Center(

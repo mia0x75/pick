@@ -39,8 +39,8 @@ class AppTheme {
         bodyLarge: TextStyle(color: Colors.white70, fontSize: 16),
         bodyMedium: TextStyle(color: Colors.grey, fontSize: 14),
       ),
-      focusColor: _primaryColor.withOpacity(0.4),
-      highlightColor: _primaryColor.withOpacity(0.2),
+      focusColor: _primaryColor.withValues(alpha: 0.4),
+      highlightColor: _primaryColor.withValues(alpha: 0.2),
     );
   }
 }

@@ -54,7 +54,7 @@ class _GlowLoadingAnimationState extends State<GlowLoadingAnimation>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFF6B35).withOpacity(_opacityAnimation.value * 0.5),
+                    color: const Color(0xFFFF6B35).withValues(alpha: _opacityAnimation.value * 0.5),
                     blurRadius: 24 * _scaleAnimation.value,
                     spreadRadius: 4 * _scaleAnimation.value,
                   ),
@@ -69,7 +69,7 @@ class _GlowLoadingAnimationState extends State<GlowLoadingAnimation>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFF6B35).withOpacity(_opacityAnimation.value * 0.7),
+                    color: const Color(0xFFFF6B35).withValues(alpha: _opacityAnimation.value * 0.7),
                     blurRadius: 16 * _scaleAnimation.value,
                     spreadRadius: 2 * _scaleAnimation.value,
                   ),
@@ -85,7 +85,7 @@ class _GlowLoadingAnimationState extends State<GlowLoadingAnimation>
                 color: const Color(0xFFFF6B35),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFF6B35).withOpacity(0.8),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.8),
                     blurRadius: 8,
                     spreadRadius: 1,
                   ),
