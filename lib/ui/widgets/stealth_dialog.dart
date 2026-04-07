@@ -87,7 +87,7 @@ class _StealthDialogState extends ConsumerState<StealthDialog> {
             if (_wrongAttempts > 0) ...[
               SizedBox(height: 16.h),
               Text(
-                '错误 ${_wrongAttempts}/3',
+                '错误 $_wrongAttempts/3',
                 style: TextStyle(color: Colors.redAccent, fontSize: 14.sp),
               ),
             ],

@@ -124,4 +124,22 @@ class FavoriteNode {
       sortOrder: json['sortOrder'] as int? ?? 0,
     );
   }
+
+  FavoriteNode copyWith({
+    String? id,
+    String? name,
+    String? sourceNodeId,
+    String? path,
+    String? posterUrl,
+    int? sortOrder,
+  }) {
+    return FavoriteNode(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      sourceNodeId: sourceNodeId ?? this.sourceNodeId,
+      path: path ?? this.path,
+      posterUrl: posterUrl ?? this.posterUrl,
+      sortOrder: sortOrder ?? this.sortOrder,
+    );
+  }
 }

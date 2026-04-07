@@ -10,8 +10,6 @@ import 'core/services/smb_service.dart';
 import 'core/services/bluetooth_service.dart';
 import 'core/services/websocket_service.dart';
 import 'core/sync/sync_manager.dart';
-import 'core/providers/stealth_provider.dart';
-import 'core/providers/node_provider.dart';
 import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';

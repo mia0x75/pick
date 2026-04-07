@@ -12,11 +12,10 @@ class WebDavService {
   bool get isConnected => _client != null;
 
   Future<void> init() async {
-    // Load cached credentials
     final box = Hive.box(AppConstants.credentialsBox);
-    final storedUrl = box.get('webdav_url');
-    final storedUser = box.get('webdav_user');
-    final storedPass = box.get('webdav_pass');
+    final storedUrl = box.get('webdav_url') as String?;
+    final storedUser = box.get('webdav_user') as String?;
+    final storedPass = box.get('webdav_pass') as String?;
 
     if (storedUrl != null) {
       await connect(
@@ -34,8 +33,8 @@ class WebDavService {
   }) async {
     _client = newClient(
       baseUrl,
-      user: username,
-      password: password,
+      user: username ?? '',
+      password: password ?? '',
     );
 
     _client!.setHeaders({
@@ -46,7 +45,6 @@ class WebDavService {
     _client!.setSendTimeout(AppConstants.networkTimeout.inMilliseconds);
     _client!.setReceiveTimeout(AppConstants.networkTimeout.inMilliseconds);
 
-    // Test connection
     await _client!.ping();
   }
 
@@ -54,14 +52,12 @@ class WebDavService {
     final cacheKey = path;
     final now = DateTime.now();
 
-    // Check cache
     if (_dirCache.containsKey(cacheKey) &&
         _cacheExpiry.containsKey(cacheKey) &&
         now.isBefore(_cacheExpiry[cacheKey]!)) {
       return List<Map<String, dynamic>>.from(_dirCache[cacheKey]);
     }
 
-    // Retry with exponential backoff
     List<Map<String, dynamic>> result;
     var retryCount = 0;
     while (true) {
@@ -73,7 +69,7 @@ class WebDavService {
             'path': item.path,
             'isDir': item.isDir,
             'size': item.size,
-            'lastModified': item.lastModified?.toIso8601String(),
+            'lastModified': item.mtime?.toIso8601String(),
           };
         }).toList();
         break;
@@ -90,21 +86,15 @@ class WebDavService {
       }
     }
 
-    // Cache result
     _dirCache[cacheKey] = result;
     _cacheExpiry[cacheKey] = now.add(AppConstants.directoryCacheTtl);
 
     return result;
   }
 
-  Stream<List<int>> readFileStream(String path) async* {
+  Future<List<int>> readFile(String path) async {
     try {
-      final stream = await _client!.read(path);
-      await for (final chunk in stream) {
-        if (chunk is List<int>) {
-          yield chunk;
-        }
-      }
+      return await _client!.read(path);
     } catch (e) {
       throw StorageException(
         code: 'WEBDAV_READ_FAILED',

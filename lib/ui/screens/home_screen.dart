@@ -6,7 +6,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/providers/stealth_provider.dart';
 import '../../core/providers/node_provider.dart';
-import '../../core/models/storage_node.dart';
 import '../../shared/constants.dart';
 import '../widgets/focusable_card.dart';
 import '../widgets/recently_played_card.dart';

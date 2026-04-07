@@ -9,6 +9,7 @@ import '../services/webdav_service.dart';
 class SyncManager {
   final WebDavService _webdavService = WebDavService();
   Timer? _pollTimer;
+  // ignore: unused_field
   String _deviceId = '';
 
   Future<void> init() async {
@@ -86,13 +87,8 @@ class SyncManager {
   Future<void> _uploadSyncFile() async {
     if (!_webdavService.isConnected) return;
 
-    final allProgress = await getAllProgress();
+    await getAllProgress();
     // TODO: write syncData to WebDAV
-    // final syncData = {
-    //   'deviceId': _deviceId,
-    //   'updatedAt': DateTime.now().toIso8601String(),
-    //   'progress': allProgress.map((p) => p.toJson()).toList(),
-    // };
   }
 
   Future<Map<String, MediaProgress>?> _downloadSyncFile() async {
