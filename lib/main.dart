@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,43 +6,93 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:flutter_bugly/flutter_bugly.dart';
 
-import 'core/services/webdav_service.dart';
-import 'core/services/smb_service.dart';
-import 'core/services/bluetooth_service.dart';
-import 'core/services/websocket_service.dart';
-import 'core/sync/sync_manager.dart';
 import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';
 
 void main() {
+  // Bugly FIRST — wraps everything
   FlutterBugly.postCatchedException(() {
     runZonedGuarded(() async {
+      // 1. Bugly init — absolute first
+      await FlutterBugly.init(
+        androidAppId: '75b96efd9c',
+        debugMode: true,
+      );
+
+      // 2. Test message — verify Bugly is connected
+      FlutterBugly.uploadException(
+        type: 'AppStart',
+        message: 'Pick Player v0.1.0 starting',
+        detail: 'device: Android, abi: arm64-v8a',
+      );
+
+      // 3. Flutter binding
       WidgetsFlutterBinding.ensureInitialized();
 
-      MediaKit.ensureInitialized();
+      // 4. MediaKit
+      try {
+        MediaKit.ensureInitialized();
+        FlutterBugly.uploadException(
+          type: 'MediaKit',
+          message: 'MediaKit initialized OK',
+          detail: '',
+        );
+      } catch (e, st) {
+        FlutterBugly.uploadException(
+          type: 'MediaKitInit',
+          message: '$e',
+          detail: '$st',
+        );
+      }
 
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
+      // 5. Orientation
+      try {
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+        await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      } catch (e, st) {
+        FlutterBugly.uploadException(
+          type: 'SystemChrome',
+          message: '$e',
+          detail: '$st',
+        );
+      }
 
-      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      // 6. Hive
+      try {
+        await Hive.initFlutter();
+        await _openHiveBoxes();
+        FlutterBugly.uploadException(
+          type: 'Hive',
+          message: 'Hive initialized OK',
+          detail: '',
+        );
+      } catch (e, st) {
+        FlutterBugly.uploadException(
+          type: 'HiveInit',
+          message: '$e',
+          detail: '$st',
+        );
+      }
 
-      await Hive.initFlutter();
-      await _openHiveBoxes();
-
-      FlutterBugly.init(
-        androidAppId: '75b96efd9c',
+      // 7. Run app
+      FlutterBugly.uploadException(
+        type: 'RunApp',
+        message: 'Calling runApp',
+        detail: '',
       );
-
       runApp(const ProviderScope(child: PickPlayerApp()));
     }, (error, stackTrace) {
+      // CATCH ALL
       FlutterBugly.uploadException(
-        type: error.runtimeType.toString(),
-        message: error.toString(),
-        detail: stackTrace.toString(),
+        type: 'UncaughtError',
+        message: '$error',
+        detail: '$stackTrace',
       );
+      debugPrint('UNCAUGHT: $error\n$stackTrace');
     });
   });
 }
@@ -67,79 +116,10 @@ class PickPlayerApp extends ConsumerStatefulWidget {
 }
 
 class _PickPlayerAppState extends ConsumerState<PickPlayerApp> {
-  final _webdavService = WebDavService();
-  final _smbService = SmbService();
-  final _btService = BluetoothService();
-  final _wsService = WebSocketService();
-  final _syncManager = SyncManager();
-
   @override
   void initState() {
     super.initState();
-    _initServices();
-  }
-
-  Future<void> _initServices() async {
-    try {
-      await _webdavService.init();
-    } catch (e, st) {
-      debugPrint('WebDAV init error: $e\n$st');
-      FlutterBugly.uploadException(
-        type: 'WebDAVInit',
-        message: '$e',
-        detail: '$st',
-      );
-    }
-    try {
-      await _smbService.init();
-    } catch (e, st) {
-      debugPrint('SMB init error: $e\n$st');
-      FlutterBugly.uploadException(
-        type: 'SMBInit',
-        message: '$e',
-        detail: '$st',
-      );
-    }
-    try {
-      await _btService.init();
-    } catch (e, st) {
-      debugPrint('Bluetooth init error: $e\n$st');
-      FlutterBugly.uploadException(
-        type: 'BluetoothInit',
-        message: '$e',
-        detail: '$st',
-      );
-    }
-    try {
-      await _wsService.startServer();
-    } catch (e, st) {
-      debugPrint('WebSocket init error: $e\n$st');
-      FlutterBugly.uploadException(
-        type: 'WebSocketInit',
-        message: '$e',
-        detail: '$st',
-      );
-    }
-    try {
-      await _syncManager.init();
-    } catch (e, st) {
-      debugPrint('Sync init error: $e\n$st');
-      FlutterBugly.uploadException(
-        type: 'SyncInit',
-        message: '$e',
-        detail: '$st',
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _btService.dispose();
-    _webdavService.dispose();
-    _smbService.dispose();
-    _wsService.dispose();
-    _syncManager.dispose();
-    super.dispose();
+    // No service initialization — test if app can start at all
   }
 
   @override
