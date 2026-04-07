@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/providers/stealth_provider.dart';
@@ -14,6 +15,8 @@ import '../widgets/resource_card.dart';
 import '../widgets/secret_code_overlay.dart';
 import '../widgets/settings_drawer.dart';
 import '../widgets/resource_context_menu.dart';
+import '../widgets/recently_played_context_menu.dart';
+import '../widgets/favorites_context_menu.dart';
 import 'history_page.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -38,7 +41,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   bool _showSecretOverlay = false;
   bool _showContextMenu = false;
+  String _contextMenuType = ''; // 'recently', 'favorites', 'resources'
   StorageNode? _contextMenuNode;
+  int _contextMenuIndex = -1;
 
   @override
   void initState() {
@@ -133,27 +138,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
 
             // 3. Context menu overlay
-            if (_showContextMenu && _contextMenuNode != null)
+            if (_showContextMenu)
               Positioned.fill(
                 child: GestureDetector(
                   onTap: () => setState(() => _showContextMenu = false),
-                  child: ResourceContextMenu(
-                    node: _contextMenuNode!,
-                    onTogglePrivate: (isPrivate) {
-                      ref.read(nodeProvider.notifier).togglePrivate(
-                        _contextMenuNode!.id,
-                        isPrivate,
-                      );
-                    },
-                    onMove: () {},
-                    onEdit: () {},
-                    onDelete: () {
-                      ref.read(nodeProvider.notifier).removeNode(
-                        _contextMenuNode!.id,
-                      );
-                    },
-                    onClose: () => setState(() => _showContextMenu = false),
-                  ),
+                  child: _buildContextMenu(),
                 ),
               ),
 
@@ -197,7 +186,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                       if (index == _recentItems.length) {
                                         return Padding(
                                           padding: EdgeInsets.only(right: 24.w),
-                                          child: _buildHistoryButton(),
+                                          child: RecentlyPlayedCard(
+                                            title: '播放历史',
+                                            isHistoryButton: true,
+                                            onMenu: () => _showRecentlyPlayedMenu(isHistory: true),
+                                          ),
                                         );
                                       }
                                       final item = _recentItems[index];
@@ -208,6 +201,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                           posterUrl: item['poster'],
                                           previewUrl: item['preview'],
                                           progress: item['progress'],
+                                          onMenu: () => _showRecentlyPlayedMenu(index: index),
                                         ),
                                       );
                                     },
@@ -254,7 +248,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                             name: fav.name,
                                             posterUrl: fav.posterUrl,
                                             icon: Icons.movie,
-                                            onMenu: () {},
+                                            onMenu: () => _showFavoritesMenu(index: index),
                                           ),
                                         ),
                                       );
@@ -333,33 +327,155 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildHistoryButton() {
-    return Focus(
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
-          if (event.logicalKey == LogicalKeyboardKey.select ||
-              event.logicalKey == LogicalKeyboardKey.enter ||
-              event.logicalKey == LogicalKeyboardKey.space ||
-              event.logicalKey == LogicalKeyboardKey.arrowRight) {
-            Navigator.of(context).push(
-              PageRouteBuilder(
-                pageBuilder: (_, a, __) => FadeTransition(
-                  opacity: a,
-                  child: HistoryPage(
-                    onBack: () => Navigator.of(context).pop(),
-                  ),
-                ),
-                transitionDuration: const Duration(milliseconds: 300),
-              ),
+  Widget _buildContextMenu() {
+    switch (_contextMenuType) {
+      case 'recently':
+        return RecentlyPlayedContextMenu(
+          isHistoryButton: _contextMenuIndex < 0,
+          onResume: () {
+            // TODO: Resume playback from history
+          },
+          onRestart: () {
+            // TODO: Restart from 00:00:00
+          },
+          onLocate: () {
+            // TODO: Jump to source resource in Row 3
+          },
+          onRemove: () {
+            if (_contextMenuIndex >= 0) {
+              setState(() => _recentItems.removeAt(_contextMenuIndex));
+            }
+          },
+          onClearAll: () => _confirmClearHistory(),
+          onClose: () => setState(() => _showContextMenu = false),
+        );
+      case 'favorites':
+        return FavoritesContextMenu(
+          onRename: () => _showAddResourceDialog(context),
+          onReorder: () {},
+          onChangeCover: () {},
+          onUnpin: () {
+            // TODO: Remove from favorites
+          },
+          onClose: () => setState(() => _showContextMenu = false),
+        );
+      case 'resources':
+        if (_contextMenuNode == null) return const SizedBox.shrink();
+        return ResourceContextMenu(
+          node: _contextMenuNode!,
+          isUnlocked: ref.read(stealthProvider) == StealthMode.unlocked,
+          onTogglePrivate: (isPrivate) {
+            ref.read(nodeProvider.notifier).togglePrivate(
+              _contextMenuNode!.id,
+              isPrivate,
             );
-            return KeyEventResult.handled;
-          }
-        }
-        return KeyEventResult.ignored;
-      },
-      child: RecentlyPlayedCard(
-        title: '播放历史',
-        isHistoryButton: true,
+          },
+          onEditConfig: () => _showAddResourceDialog(context),
+          onTestConnection: () => _showToast('测试连接功能开发中'),
+          onDelete: () => _confirmDeleteResource(_contextMenuNode!),
+          onClose: () => setState(() => _showContextMenu = false),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  void _showRecentlyPlayedMenu({int? index, bool isHistory = false}) {
+    setState(() {
+      _contextMenuType = 'recently';
+      _contextMenuIndex = index ?? -1;
+      _contextMenuNode = null;
+      _showContextMenu = true;
+    });
+  }
+
+  void _showFavoritesMenu({int? index}) {
+    setState(() {
+      _contextMenuType = 'favorites';
+      _contextMenuIndex = index ?? -1;
+      _contextMenuNode = null;
+      _showContextMenu = true;
+    });
+  }
+
+  void _showResourceMenu(StorageNode node) {
+    setState(() {
+      _contextMenuType = 'resources';
+      _contextMenuNode = node;
+      _contextMenuIndex = -1;
+      _showContextMenu = true;
+    });
+  }
+
+  void _confirmClearHistory() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text('确认清空', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          '清空所有播放历史记录？此操作不可撤销。',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => _recentItems.clear());
+              Hive.box(AppConstants.historyBox).clear();
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6B35),
+            ),
+            child: const Text('确认清空'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteResource(StorageNode node) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text('确认删除', style: TextStyle(color: Colors.white)),
+        content: Text(
+          '彻底删除"${node.name}"？\n此操作将清除所有配置、账号密码及关联收藏，不可撤销。',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(nodeProvider.notifier).removeNode(node.id);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6B35),
+            ),
+            child: const Text('确认删除'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showToast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFF1E1E1E),
       ),
     );
   }
@@ -470,13 +586,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         );
       },
     );
-  }
-
-  void _showResourceMenu(StorageNode node) {
-    setState(() {
-      _contextMenuNode = node;
-      _showContextMenu = true;
-    });
   }
 
   Widget _buildSectionTitle(String title) {

@@ -10,6 +10,7 @@ class RecentlyPlayedCard extends StatefulWidget {
   final double progress;
   final bool isHistoryButton;
   final VoidCallback? onSelect;
+  final VoidCallback? onMenu;
 
   const RecentlyPlayedCard({
     super.key,
@@ -19,6 +20,7 @@ class RecentlyPlayedCard extends StatefulWidget {
     this.progress = 0.0,
     this.isHistoryButton = false,
     this.onSelect,
+    this.onMenu,
   });
 
   @override
@@ -46,6 +48,11 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
           event.logicalKey == LogicalKeyboardKey.enter ||
           event.logicalKey == LogicalKeyboardKey.space) {
         widget.onSelect?.call();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.contextMenu ||
+          event.logicalKey == LogicalKeyboardKey.keyM) {
+        widget.onMenu?.call();
         return KeyEventResult.handled;
       }
     }

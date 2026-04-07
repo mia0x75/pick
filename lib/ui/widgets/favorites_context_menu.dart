@@ -2,74 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../core/models/storage_node.dart';
-
-class ResourceContextMenu extends StatefulWidget {
-  final StorageNode node;
-  final bool isUnlocked;
-  final Function(bool isPrivate) onTogglePrivate;
-  final VoidCallback onEditConfig;
-  final VoidCallback onTestConnection;
-  final VoidCallback onDelete;
+class FavoritesContextMenu extends StatefulWidget {
+  final VoidCallback onRename;
+  final VoidCallback onReorder;
+  final VoidCallback onChangeCover;
+  final VoidCallback onUnpin;
   final VoidCallback onClose;
 
-  const ResourceContextMenu({
+  const FavoritesContextMenu({
     super.key,
-    required this.node,
-    required this.isUnlocked,
-    required this.onTogglePrivate,
-    required this.onEditConfig,
-    required this.onTestConnection,
-    required this.onDelete,
+    required this.onRename,
+    required this.onReorder,
+    required this.onChangeCover,
+    required this.onUnpin,
     required this.onClose,
   });
 
   @override
-  State<ResourceContextMenu> createState() => _ResourceContextMenuState();
+  State<FavoritesContextMenu> createState() => _FavoritesContextMenuState();
 }
 
-class _ResourceContextMenuState extends State<ResourceContextMenu> {
+class _FavoritesContextMenuState extends State<FavoritesContextMenu> {
   int _focusedIndex = 0;
 
-  List<_ContextMenuItem> get _items {
-    final items = [
-      _ContextMenuItem(icon: Icons.edit, label: '编辑配置', onTap: widget.onEditConfig),
-      _ContextMenuItem(
-        icon: Icons.network_check,
-        label: '测试连接',
-        onTap: widget.onTestConnection,
-      ),
-    ];
-
-    // Only show exposure toggle when privacy is unlocked
-    if (widget.isUnlocked) {
-      items.insert(
-        1,
-        _ContextMenuItem(
-          icon: widget.node.isPrivate ? Icons.visibility : Icons.visibility_off,
-          label: widget.node.isPrivate ? '恢复为公开' : '设置为私密',
-          onTap: () => widget.onTogglePrivate(!widget.node.isPrivate),
-        ),
-      );
-    }
-
-    items.add(
-      _ContextMenuItem(
-        icon: Icons.delete_forever,
-        label: '彻底删除',
-        onTap: widget.onDelete,
-        isDanger: true,
-      ),
-    );
-
-    return items;
-  }
+  final List<_ContextMenuItem> _items = const [
+    _ContextMenuItem(icon: Icons.edit, label: '重命名别名'),
+    _ContextMenuItem(icon: Icons.swap_horiz, label: '调整排序'),
+    _ContextMenuItem(icon: Icons.image, label: '更换封面'),
+    _ContextMenuItem(icon: Icons.bookmark_remove, label: '取消收藏', isDanger: true),
+  ];
 
   KeyEventResult _onItemKeyEvent(int index, KeyEvent event) {
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.select ||
           event.logicalKey == LogicalKeyboardKey.enter) {
-        _items[index].onTap();
+        switch (index) {
+          case 0: widget.onRename(); break;
+          case 1: widget.onReorder(); break;
+          case 2: widget.onChangeCover(); break;
+          case 3: widget.onUnpin(); break;
+        }
         widget.onClose();
         return KeyEventResult.handled;
       }
@@ -158,13 +130,11 @@ class _ResourceContextMenuState extends State<ResourceContextMenu> {
 class _ContextMenuItem {
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
   final bool isDanger;
 
   const _ContextMenuItem({
     required this.icon,
     required this.label,
-    required this.onTap,
     this.isDanger = false,
   });
 }

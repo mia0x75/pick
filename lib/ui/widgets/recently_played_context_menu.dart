@@ -2,67 +2,50 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../core/models/storage_node.dart';
-
-class ResourceContextMenu extends StatefulWidget {
-  final StorageNode node;
-  final bool isUnlocked;
-  final Function(bool isPrivate) onTogglePrivate;
-  final VoidCallback onEditConfig;
-  final VoidCallback onTestConnection;
-  final VoidCallback onDelete;
+class RecentlyPlayedContextMenu extends StatefulWidget {
+  final bool isHistoryButton;
+  final VoidCallback onResume;
+  final VoidCallback onRestart;
+  final VoidCallback onLocate;
+  final VoidCallback onRemove;
+  final VoidCallback onClearAll;
   final VoidCallback onClose;
 
-  const ResourceContextMenu({
+  const RecentlyPlayedContextMenu({
     super.key,
-    required this.node,
-    required this.isUnlocked,
-    required this.onTogglePrivate,
-    required this.onEditConfig,
-    required this.onTestConnection,
-    required this.onDelete,
+    required this.isHistoryButton,
+    required this.onResume,
+    required this.onRestart,
+    required this.onLocate,
+    required this.onRemove,
+    required this.onClearAll,
     required this.onClose,
   });
 
   @override
-  State<ResourceContextMenu> createState() => _ResourceContextMenuState();
+  State<RecentlyPlayedContextMenu> createState() => _RecentlyPlayedContextMenuState();
 }
 
-class _ResourceContextMenuState extends State<ResourceContextMenu> {
+class _RecentlyPlayedContextMenuState extends State<RecentlyPlayedContextMenu> {
   int _focusedIndex = 0;
 
   List<_ContextMenuItem> get _items {
-    final items = [
-      _ContextMenuItem(icon: Icons.edit, label: '编辑配置', onTap: widget.onEditConfig),
-      _ContextMenuItem(
-        icon: Icons.network_check,
-        label: '测试连接',
-        onTap: widget.onTestConnection,
-      ),
-    ];
-
-    // Only show exposure toggle when privacy is unlocked
-    if (widget.isUnlocked) {
-      items.insert(
-        1,
+    if (widget.isHistoryButton) {
+      return [
         _ContextMenuItem(
-          icon: widget.node.isPrivate ? Icons.visibility : Icons.visibility_off,
-          label: widget.node.isPrivate ? '恢复为公开' : '设置为私密',
-          onTap: () => widget.onTogglePrivate(!widget.node.isPrivate),
+          icon: Icons.delete_sweep,
+          label: '清空全部历史',
+          onTap: widget.onClearAll,
+          isDanger: true,
         ),
-      );
+      ];
     }
-
-    items.add(
-      _ContextMenuItem(
-        icon: Icons.delete_forever,
-        label: '彻底删除',
-        onTap: widget.onDelete,
-        isDanger: true,
-      ),
-    );
-
-    return items;
+    return [
+      _ContextMenuItem(icon: Icons.play_arrow, label: '继续播放', onTap: widget.onResume),
+      _ContextMenuItem(icon: Icons.replay, label: '重新开始', onTap: widget.onRestart),
+      _ContextMenuItem(icon: Icons.folder_open, label: '定位资源', onTap: widget.onLocate),
+      _ContextMenuItem(icon: Icons.delete_outline, label: '移除记录', onTap: widget.onRemove),
+    ];
   }
 
   KeyEventResult _onItemKeyEvent(int index, KeyEvent event) {
@@ -70,7 +53,6 @@ class _ResourceContextMenuState extends State<ResourceContextMenu> {
       if (event.logicalKey == LogicalKeyboardKey.select ||
           event.logicalKey == LogicalKeyboardKey.enter) {
         _items[index].onTap();
-        widget.onClose();
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
