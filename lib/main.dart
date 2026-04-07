@@ -9,23 +9,22 @@ import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations([
+  // Non-blocking: let Splash show first
+  SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
 
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-  await Hive.initFlutter();
-  await _openHiveBoxes();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   runApp(const ProviderScope(child: PickPlayerApp()));
 }
 
-Future<void> _openHiveBoxes() async {
+Future<void> initHive() async {
+  await Hive.initFlutter();
   await Future.wait([
     Hive.openBox(AppConstants.settingsBox),
     Hive.openBox(AppConstants.historyBox),
