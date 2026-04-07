@@ -12,9 +12,9 @@ dependencies:
     sdk: flutter
 
   # Media playback
-  media_kit: ^1.1.10+1
-  media_kit_video: ^1.2.4
-  media_kit_libs_video: ^1.0.8
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
 
   # Local storage
   hive: ^2.2.3
@@ -22,8 +22,8 @@ dependencies:
 
   # Network protocols
   webdav_client: ^1.2.2
-  smb_connector: ^0.0.4
-  ftpconnect: ^2.5.0
+  smb_connect: ^0.0.9
+  ftpconnect: ^2.0.10
   flutter_blue_plus: ^1.31.15
   bonsoir: ^5.1.10
 
