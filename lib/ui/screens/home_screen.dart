@@ -659,33 +659,33 @@ Widget _buildRecentList() {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8.r),
-            // 优化点 1 & 2：直接根据 focus 状态赋予唯一确定值，消除嵌套判断
-            color: isFocused 
-                ? (isPrimary ? const Color(0xFFFF6B35) : Colors.white24) 
-                : null, // 非聚焦不需要颜色
-            border: isFocused 
-                ? Border.all(color: Colors.white, width: 2.w) 
-                : null, // 非聚焦不需要边框对象
-          ),
-          child: Text(
-            text,
-            style: isFocused
-                ? TextStyle( // 优化点 3 & 4：聚焦态样式完全独立，彻底消除逻辑分支
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18.sp,
-                  )
-                : TextStyle( // 非聚焦态样式
-                    color: isPrimary ? const Color(0xFFFF6B35) : Colors.grey,
-                    fontSize: 18.sp,
-                  ),
+          // 移除所有冗余的 null 判断和 color 分支
+          decoration: isFocused 
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(8.r),
+                  color: isPrimary ? const Color(0xFFFF6B35) : Colors.white24,
+                  border: Border.all(color: Colors.white, width: 2.w),
+                )
+              : null, // 非聚焦态下完全不渲染装饰，性能最优且逻辑最净
+          child: Center( // 确保文字居中
+            child: Text(
+              text,
+              style: isFocused
+                  ? TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18.sp,
+                      // color 默认为白色，在黑色背景下无需显式声明
+                    )
+                  : TextStyle(
+                      color: isPrimary ? const Color(0xFFFF6B35) : Colors.grey,
+                      fontSize: 18.sp,
+                    ),
+            ),
           ),
         ),
       );
     },
-   );
+  );
   }
 
   void _showChangeCodeDialog(BuildContext context) {
