@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../main.dart';
+import '../../main.dart';
 import '../widgets/glow_loading_animation.dart';
 import 'home_screen.dart';
 
