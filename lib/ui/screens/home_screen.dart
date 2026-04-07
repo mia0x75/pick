@@ -644,7 +644,7 @@ Widget _buildRecentList() {
   }
 
   // 辅助组件：电视焦点按钮
-Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrimary}) {
+  Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrimary}) {
     return StatefulBuilder(builder: (context, setState) {
       bool isFocused = false;
       return Focus(
@@ -660,25 +660,27 @@ Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrim
           duration: const Duration(milliseconds: 200),
           padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
           decoration: BoxDecoration(
-            // 只有聚焦时才显示背景色，区分主次按钮
+            borderRadius: BorderRadius.circular(8.r),
+            // 优化点 1 & 2：直接根据 focus 状态赋予唯一确定值，消除嵌套判断
             color: isFocused 
                 ? (isPrimary ? const Color(0xFFFF6B35) : Colors.white24) 
-                : Colors.transparent,
-            // 只有聚焦时才显示白色边框，增强视觉引导
-            border: Border.all(
-              color: isFocused ? Colors.white : Colors.transparent, 
-              width: 2.w,
-            ),
-            borderRadius: BorderRadius.circular(8.r),
+                : null, // 非聚焦不需要颜色
+            border: isFocused 
+                ? Border.all(color: Colors.white, width: 2.w) 
+                : null, // 非聚焦不需要边框对象
           ),
           child: Text(
-            text, 
-            style: TextStyle(
-              // 聚焦时文字加粗并变白，非聚焦时主按钮用品牌色，次按钮用灰色
-              color: isFocused ? Colors.white : (isPrimary ? const Color(0xFFFF6B35) : Colors.grey),
-              fontWeight: isFocused ? FontWeight.bold : FontWeight.normal,
-              fontSize: 18.sp,
-            ),
+            text,
+            style: isFocused
+                ? TextStyle( // 优化点 3 & 4：聚焦态样式完全独立，彻底消除逻辑分支
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18.sp,
+                  )
+                : TextStyle( // 非聚焦态样式
+                    color: isPrimary ? const Color(0xFFFF6B35) : Colors.grey,
+                    fontSize: 18.sp,
+                  ),
           ),
         ),
       );
