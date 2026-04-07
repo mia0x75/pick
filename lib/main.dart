@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:media_kit/media_kit.dart';
 
 import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
