@@ -27,13 +27,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final List<LogicalKeyboardKey> _keyBuffer = [];
   DateTime? _lastKeyPressTime;
 
-  final List<Map<String, dynamic>> _recentItems = [
-    {'title': '星际穿越', 'poster': '', 'preview': '', 'progress': 0.65},
-    {'title': '盗梦空间', 'poster': '', 'preview': '', 'progress': 0.30},
-    {'title': '沙丘', 'poster': '', 'preview': '', 'progress': 0.90},
-    {'title': '银翼杀手 2049', 'poster': '', 'preview': '', 'progress': 0.15},
-    {'title': '降临', 'poster': '', 'preview': '', 'progress': 0.0},
-  ];
+  final List<Map<String, dynamic>> _recentItems = [];
 
   @override
   void dispose() {
@@ -101,32 +95,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           SizedBox(height: AppConstants.rowSpacing.h),
                           SizedBox(
                             height: AppConstants.row1Height.h,
-                            child: ListView.builder(
-                              controller: _row1Controller,
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _recentItems.length + 1,
-                              itemBuilder: (_, index) {
-                                if (index == _recentItems.length) {
-                                  return Padding(
-                                    padding: EdgeInsets.only(right: 16.w),
-                                    child: RecentlyPlayedCard(
-                                      title: '播放历史',
-                                      isHistoryButton: true,
+                            child: _recentItems.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.play_circle_outline, size: 48.sp, color: Colors.grey),
+                                        SizedBox(height: 8.h),
+                                        Text('暂无播放记录', style: TextStyle(color: Colors.grey, fontSize: 16.sp)),
+                                      ],
                                     ),
-                                  );
-                                }
-                                final item = _recentItems[index];
-                                return Padding(
-                                  padding: EdgeInsets.only(right: 16.w),
-                                  child: RecentlyPlayedCard(
-                                    title: item['title'],
-                                    posterUrl: item['poster'],
-                                    previewUrl: item['preview'],
-                                    progress: item['progress'],
+                                  )
+                                : ListView.builder(
+                                    controller: _row1Controller,
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: _recentItems.length + 1,
+                                    itemBuilder: (_, index) {
+                                      if (index == _recentItems.length) {
+                                        return Padding(
+                                          padding: EdgeInsets.only(right: 16.w),
+                                          child: RecentlyPlayedCard(
+                                            title: '播放历史',
+                                            isHistoryButton: true,
+                                          ),
+                                        );
+                                      }
+                                      final item = _recentItems[index];
+                                      return Padding(
+                                        padding: EdgeInsets.only(right: 16.w),
+                                        child: RecentlyPlayedCard(
+                                          title: item['title'],
+                                          posterUrl: item['poster'],
+                                          previewUrl: item['preview'],
+                                          progress: item['progress'],
+                                        ),
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
                           ),
                         ],
                       ),
@@ -150,34 +155,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           SizedBox(height: AppConstants.rowSpacing.h),
                           SizedBox(
                             height: AppConstants.row23CardHeight.h,
-                            child: ListView.builder(
-                              controller: _row2Controller,
-                              scrollDirection: Axis.horizontal,
-                              itemCount: favorites.isEmpty ? 3 : favorites.length,
-                              itemBuilder: (_, index) {
-                                if (favorites.isEmpty) {
-                                  return Padding(
-                                    padding: EdgeInsets.only(right: 16.w),
-                                    child: FavoriteCard(
-                                      name: '未设置',
-                                      icon: Icons.folder_open,
+                            child: favorites.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.bookmark_border, size: 48.sp, color: Colors.grey),
+                                        SizedBox(height: 8.h),
+                                        Text('暂无收藏', style: TextStyle(color: Colors.grey, fontSize: 16.sp)),
+                                      ],
                                     ),
-                                  );
-                                }
-                                final fav = favorites[index];
-                                return Padding(
-                                  padding: EdgeInsets.only(right: 16.w),
-                                  child: SizedBox(
-                                    width: AppConstants.row23CardWidth.w,
-                                    child: FavoriteCard(
-                                      name: fav.name,
-                                      posterUrl: fav.posterUrl,
-                                      icon: Icons.movie,
-                                    ),
+                                  )
+                                : ListView.builder(
+                                    controller: _row2Controller,
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: favorites.length,
+                                    itemBuilder: (_, index) {
+                                      final fav = favorites[index];
+                                      return Padding(
+                                        padding: EdgeInsets.only(right: 16.w),
+                                        child: SizedBox(
+                                          width: AppConstants.row23CardWidth.w,
+                                          child: FavoriteCard(
+                                            name: fav.name,
+                                            posterUrl: fav.posterUrl,
+                                            icon: Icons.movie,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
                           ),
                         ],
                       ),
