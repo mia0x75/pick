@@ -23,7 +23,7 @@ dependencies:
   # Network protocols
   webdav_client: ^1.2.2
   smb_connect: ^0.0.9
-  ftpconnect: ^2.0.10
+  ftpconnect: 2.0.7
   flutter_blue_plus: ^1.31.15
   bonsoir: ^5.1.10
 
