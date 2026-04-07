@@ -7,3 +7,8 @@ linter:
     avoid_print: true
     prefer_single_quotes: true
     require_trailing_commas: true
+
+analyzer:
+  errors:
+    deprecated_member_use: ignore
+    prefer_const_constructors: ignore
