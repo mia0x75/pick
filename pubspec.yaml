@@ -41,9 +41,6 @@ dependencies:
   # WebSocket sync
   web_socket_channel: ^2.4.0
 
-  # Crash reporting
-  sentry_flutter: ^9.16.0
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

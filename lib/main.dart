@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'core/services/webdav_service.dart';
 import 'core/services/smb_service.dart';
@@ -16,27 +17,97 @@ import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';
 
+/// Local crash logger — writes crash reports to a file, readable on next launch.
+class _CrashLogger {
+  static const _crashFile = '/data/data/com.mxu.pick/crash.log';
+
+  static void init() {
+    // Catch Flutter errors
+    FlutterError.onError = (details) {
+      _writeCrash('FlutterError', details.exceptionAsString(), details.stack);
+    };
+
+    // Catch all other uncaught errors
+    PlatformDispatcher.instance.onError = (error, stack) {
+      _writeCrash('PlatformDispatcher', error.toString(), stack);
+      return true;
+    };
+
+    // Catch native crashes via logcat
+    _writeCrash('AppStart', 'App launched at ${DateTime.now().toIso8601String()}', null);
+  }
+
+  static void _writeCrash(String source, String error, StackTrace? stack) {
+    try {
+      final file = File(_crashFile);
+      final log = '''
+========================================
+CRASH REPORT — ${DateTime.now().toIso8601String()}
+========================================
+Source: $source
+Error:  $error
+Stack:
+${stack?.toString() ?? '(no stack trace)'}
+========================================
+
+''';
+      file.writeAsStringSync(log, mode: FileMode.append);
+    } catch (e) {
+      // If we can't write the crash log, print it
+      debugPrint('Failed to write crash log: $e');
+      debugPrint('$source: $error');
+      debugPrint('$stack');
+    }
+  }
+
+  static String? readCrashLog() {
+    try {
+      final file = File(_crashFile);
+      if (file.existsSync()) {
+        return file.readAsStringSync();
+      }
+    } catch (e) {
+      debugPrint('Failed to read crash log: $e');
+    }
+    return null;
+  }
+
+  static void clearCrashLog() {
+    try {
+      final file = File(_crashFile);
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MediaKit.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+  // Initialize crash logger first
+  _CrashLogger.init();
 
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  try {
+    MediaKit.ensureInitialized();
 
-  await Hive.initFlutter();
-  await _openHiveBoxes();
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
 
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = 'https://d012ef2bfa6523f93b451ee39c759921@o4511178001350656.ingest.us.sentry.io/4511178003251200';
-      options.enableLogs = true;
-    },
-    appRunner: () => runApp(const ProviderScope(child: PickPlayerApp())),
-  );
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    await Hive.initFlutter();
+    await _openHiveBoxes();
+  } catch (e, st) {
+    _CrashLogger._writeCrash('Init', '$e', st);
+    rethrow;
+  }
+
+  runApp(const ProviderScope(child: PickPlayerApp()));
 }
 
 Future<void> _openHiveBoxes() async {
@@ -74,27 +145,27 @@ class _PickPlayerAppState extends ConsumerState<PickPlayerApp> {
     try {
       await _webdavService.init();
     } catch (e, st) {
-      Sentry.captureException(e, stackTrace: st);
+      debugPrint('WebDAV init error: $e\n$st');
     }
     try {
       await _smbService.init();
     } catch (e, st) {
-      Sentry.captureException(e, stackTrace: st);
+      debugPrint('SMB init error: $e\n$st');
     }
     try {
       await _btService.init();
     } catch (e, st) {
-      Sentry.captureException(e, stackTrace: st);
+      debugPrint('Bluetooth init error: $e\n$st');
     }
     try {
       await _wsService.startServer();
     } catch (e, st) {
-      Sentry.captureException(e, stackTrace: st);
+      debugPrint('WebSocket init error: $e\n$st');
     }
     try {
       await _syncManager.init();
     } catch (e, st) {
-      Sentry.captureException(e, stackTrace: st);
+      debugPrint('Sync init error: $e\n$st');
     }
   }
 
