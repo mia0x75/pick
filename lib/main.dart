@@ -30,16 +30,8 @@ void main() async {
   // 设置设计分辨率
   final designSize = AppConstants.getDesignSize(screenWidth, screenHeight);
 
-  // 同步初始化 Hive（必须等待完成）
+  // 快速初始化 Hive（不阻塞，后续懒加载）
   await Hive.initFlutter();
-  await Future.wait([
-    Hive.openBox(AppConstants.settingsBox),
-    Hive.openBox(AppConstants.historyBox),
-    Hive.openBox(AppConstants.cacheBox),
-    Hive.openBox(AppConstants.credentialsBox),
-    Hive.openBox(AppConstants.nodesBox),
-    Hive.openBox(AppConstants.favoritesBox),
-  ]);
 
   // 后台初始化 MediaKit
   Isolate.spawn(_initMediaKit, null);
@@ -69,4 +61,15 @@ void _initMediaKit(dynamic _) {
   } catch (e) {
     debugPrint('⚠️ MediaKit 初始化失败: $e');
   }
+}
+
+Future<void> initHive() async {
+  await Future.wait([
+    Hive.openBox(AppConstants.settingsBox),
+    Hive.openBox(AppConstants.historyBox),
+    Hive.openBox(AppConstants.cacheBox),
+    Hive.openBox(AppConstants.credentialsBox),
+    Hive.openBox(AppConstants.nodesBox),
+    Hive.openBox(AppConstants.favoritesBox),
+  ]);
 }

@@ -17,7 +17,8 @@ class NodeNotifier extends StateNotifier<List<StorageNode>> {
       for (final key in box.keys) {
         final data = box.get(key);
         if (data != null) {
-          nodes.add(StorageNode.fromJson(data));
+          final converted = Map<String, dynamic>.from(data as Map);
+          nodes.add(StorageNode.fromJson(converted));
         }
       }
       nodes.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
@@ -81,7 +82,8 @@ class FavoriteNotifier extends StateNotifier<List<FavoriteNode>> {
       for (final key in box.keys) {
         final data = box.get(key);
         if (data != null) {
-          favs.add(FavoriteNode.fromJson(data));
+          final converted = Map<String, dynamic>.from(data as Map);
+          favs.add(FavoriteNode.fromJson(converted));
         }
       }
       favs.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
