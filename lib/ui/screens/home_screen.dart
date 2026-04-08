@@ -18,6 +18,7 @@ import '../widgets/resource_context_menu.dart';
 import '../widgets/recently_played_context_menu.dart';
 import '../widgets/favorites_context_menu.dart';
 import '../widgets/secret_code_overlay.dart';
+import 'history_page.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -41,9 +42,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   final FocusNode _keyboardFocusNode = FocusNode();
 
-  final List<FocusNode> _row1FocusNodes = [];
-  final List<FocusNode> _row2FocusNodes = [];
-  final List<FocusNode> _row3FocusNodes = [];
+  final FocusNode _settingsFocusNode = FocusNode();
 
   int _currentFocusRow = -1;
   int _currentFocusIndex = 0;
@@ -143,28 +142,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _initFocus() {
-    final nodes = ref.read(nodeProvider);
-    final favorites = ref.read(favoriteProvider);
-    final isUnlocked = ref.read(stealthProvider) == StealthMode.unlocked;
-    final visibleNodes = nodes.where((n) => isUnlocked || !n.isPrivate).toList();
-
-    final row1HasContent = _recentItems.isNotEmpty;
-    final row2HasContent = favorites.isNotEmpty;
-    final row3HasContent = visibleNodes.isNotEmpty;
-
-    if (row1HasContent) {
-      _currentFocusRow = 0;
-      _currentFocusIndex = 0;
-    } else if (row2HasContent) {
-      _currentFocusRow = 1;
-      _currentFocusIndex = 0;
-    } else if (row3HasContent) {
-      _currentFocusRow = 2;
-      _currentFocusIndex = 0;
-    } else {
-      _currentFocusRow = 2;
-      _currentFocusIndex = 0;
-    }
+    _currentFocusRow = 0;
+    _currentFocusIndex = 0;
     setState(() {});
   }
 
@@ -236,6 +215,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _row3Controller.dispose();
     _flashController.dispose();
     _keyboardFocusNode.dispose();
+    _settingsFocusNode.dispose();
     super.dispose();
   }
 
@@ -417,6 +397,7 @@ Widget _buildRecentList() {
             child: RecentlyPlayedCard(
               title: '播放历史',
               isHistoryButton: true,
+              onSelect: () => _navigateToHistory(),
               onMenu: () => _showRecentlyPlayedMenu(isHistory: true),
             ),
           );
@@ -539,6 +520,20 @@ Widget _buildRecentList() {
     }
   }
 
+  void _navigateToHistory() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => HistoryPage(
+          onBack: () => Navigator.of(context).pop(),
+        ),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+
   void _showRecentlyPlayedMenu({int? index, bool isHistory = false}) {
     setState(() {
       _contextMenuType = 'recently';
@@ -640,6 +635,8 @@ Widget _buildRecentList() {
   }
 
   Widget _buildAddResourceButton(bool isUnlocked) {
+    final isFocused = _currentFocusRow == 2 && _currentFocusIndex == _getResourceListLength();
+    
     return Focus(
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent) {
@@ -657,23 +654,55 @@ Widget _buildRecentList() {
         }
         return KeyEventResult.ignored;
       },
-      child: Container(
-        width: 160.w,
-        height: 160.h,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.white10),
-        ),
-        child: Center(
-          child: Icon(
-            Icons.add_rounded,
-            size: 64.sp,
-            color: const Color(0xFFFF6B35),
+      child: AnimatedScale(
+        scale: isFocused ? 1.1 : 1.0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        child: Container(
+          width: 160.w,
+          height: 160.h,
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: isFocused ? const Color(0xFFFF6B35) : Colors.white10,
+              width: isFocused ? 2.w : 1.w,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Center(
+                child: Icon(
+                  Icons.add_rounded,
+                  size: 64.sp,
+                  color: const Color(0xFFFF6B35),
+                ),
+              ),
+              Positioned(
+                bottom: 8.h,
+                left: 0,
+                right: 0,
+                child: Text(
+                  '添加资源',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  int _getResourceListLength() {
+    final nodes = ref.read(nodeProvider);
+    final isUnlocked = ref.read(stealthProvider) == StealthMode.unlocked;
+    final visibleNodes = nodes.where((n) => isUnlocked || !n.isPrivate).toList();
+    return visibleNodes.length;
   }
 
   Widget _buildSettingsIcon(bool isGlowing, bool hasFocus) {
