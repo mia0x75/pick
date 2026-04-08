@@ -69,12 +69,10 @@ android {
 
     buildTypes {
         release {
-            if (keystorePropertiesFile.exists()) {
-                signingConfig = signingConfigs.release
-            }
-            // If no keystore, use default debug signing (auto-generated debug keystore)
             minifyEnabled false
             shrinkResources false
+            // Always use debug signing to avoid INSTALL_PARSE_FAILED_NO_CERTIFICATES
+            signingConfig signingConfigs.debug
         }
     }
 }

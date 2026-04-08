@@ -9,21 +9,9 @@ import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Non-blocking: let Splash show first
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
-
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-  runApp(const ProviderScope(child: PickPlayerApp()));
-}
-
-Future<void> initHive() async {
   await Hive.initFlutter();
   await Future.wait([
     Hive.openBox(AppConstants.settingsBox),
@@ -33,6 +21,15 @@ Future<void> initHive() async {
     Hive.openBox(AppConstants.nodesBox),
     Hive.openBox(AppConstants.favoritesBox),
   ]);
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+  runApp(const ProviderScope(child: PickPlayerApp()));
 }
 
 class PickPlayerApp extends ConsumerStatefulWidget {

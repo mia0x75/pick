@@ -11,6 +11,8 @@ class RecentlyPlayedCard extends StatefulWidget {
   final bool isHistoryButton;
   final VoidCallback? onSelect;
   final VoidCallback? onMenu;
+  final FocusNode? focusNode;
+  final bool autofocus;
 
   const RecentlyPlayedCard({
     super.key,
@@ -21,6 +23,8 @@ class RecentlyPlayedCard extends StatefulWidget {
     this.isHistoryButton = false,
     this.onSelect,
     this.onMenu,
+    this.focusNode,
+    this.autofocus = false,
   });
 
   @override
@@ -80,6 +84,8 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
   @override
   Widget build(BuildContext context) {
     return Focus(
+      focusNode: widget.focusNode,
+      autofocus: widget.autofocus,
       onFocusChange: _onFocusChange,
       onKeyEvent: _onKeyEvent,
       child: AnimatedContainer(

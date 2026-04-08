@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,6 +17,7 @@ import '../widgets/settings_drawer.dart';
 import '../widgets/resource_context_menu.dart';
 import '../widgets/recently_played_context_menu.dart';
 import '../widgets/favorites_context_menu.dart';
+import '../widgets/secret_code_overlay.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -35,16 +37,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late AnimationController _flashController;
   late Animation<double> _flashAnimation;
 
-  final List<Map<String, dynamic>> _recentItems = [];
+  List<Map<String, dynamic>> _recentItems = [];
 
-  // 定义初始焦点节点
   final FocusNode _firstItemFocusNode = FocusNode();
 
   bool _showSecretOverlay = false;
   bool _showContextMenu = false;
-  String _contextMenuType = ''; // 'recently', 'favorites', 'resources'
+  String _contextMenuType = '';
   StorageNode? _contextMenuNode;
   int _contextMenuIndex = -1;
+
+  final FocusNode _keyboardFocusNode = FocusNode();
+
+  static const bool _isDebug = kDebugMode;
 
   @override
   void initState() {
@@ -61,6 +66,87 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         _flashController.reverse();
       }
     });
+
+    if (_isDebug) {
+      _recentItems = [
+        {
+          'title': '测试视频 1',
+          'poster': 'https://picsum.photos/300/450',
+          'preview': null,
+          'progress': 0.35,
+        },
+        {
+          'title': '测试视频 2',
+          'poster': 'https://picsum.photos/300/451',
+          'preview': null,
+          'progress': 0.72,
+        },
+        {
+          'title': '测试视频 3',
+          'poster': 'https://picsum.photos/300/452',
+          'preview': null,
+          'progress': 0.0,
+        },
+      ];
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _addDebugFavorites();
+      });
+    }
+  }
+
+  void _addDebugFavorites() {
+    if (!mounted) return;
+    final favNotifier = ref.read(favoriteProvider.notifier);
+    final currentFavs = ref.read(favoriteProvider);
+    if (currentFavs.isEmpty) {
+      favNotifier.addFavorite(FavoriteNode(
+        id: 'debug_fav_1',
+        name: '测试收藏 1',
+        sourceNodeId: 'debug_node_1',
+        path: '/movies',
+        posterUrl: 'https://picsum.photos/200/300',
+        sortOrder: 0,
+      ));
+      favNotifier.addFavorite(FavoriteNode(
+        id: 'debug_fav_2',
+        name: '测试收藏 2',
+        sourceNodeId: 'debug_node_2',
+        path: '/music',
+        posterUrl: 'https://picsum.photos/200/301',
+        sortOrder: 1,
+      ));
+    }
+    _addDebugNodes();
+  }
+
+  void _addDebugNodes() {
+    if (!mounted) return;
+    final nodeNotifier = ref.read(nodeProvider.notifier);
+    final currentNodes = ref.read(nodeProvider);
+    if (currentNodes.isEmpty) {
+      nodeNotifier.addNode(StorageNode(
+        id: 'debug_node_1',
+        name: '测试资源 1',
+        protocol: ProtocolType.smb,
+        host: '192.168.1.100',
+        path: '/share1',
+        username: 'guest',
+        password: '',
+        category: NodeCategory.normal,
+        sortOrder: 0,
+      ));
+      nodeNotifier.addNode(StorageNode(
+        id: 'debug_node_2',
+        name: '测试资源 2',
+        protocol: ProtocolType.webdav,
+        host: '192.168.1.101',
+        path: '/dav',
+        username: 'admin',
+        password: '123456',
+        category: NodeCategory.normal,
+        sortOrder: 1,
+      ));
+    }
   }
 
   @override
@@ -70,6 +156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _row3Controller.dispose();
     _flashController.dispose();
     _firstItemFocusNode.dispose();
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -83,11 +170,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     final visibleNodes = nodes.where((n) => isUnlocked || !n.isPrivate).toList();
 
-    // 暗号遮罩逻辑 (保持不变)
-    if (_showSecretOverlay) { /* ... 原有代码 ... */ }
-
     return KeyboardListener(
-      focusNode: FocusNode()..requestFocus(),
+      focusNode: _keyboardFocusNode..requestFocus(),
       onKeyEvent: (event) {
         if (event is KeyDownEvent || event is KeyRepeatEvent) {
           _handleKeyPress(event.logicalKey);
@@ -112,13 +196,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
 
-            // 3. 核心内容布局 (修复点：移除 SafeArea，引入内容权重分配)
+            // 3. 核心内容布局
             Padding(
               padding: EdgeInsets.fromLTRB(96.w, 54.h, 96.w, 24.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 顶部标题栏：融合设置图标，解决导航问题
+                  // 顶部标题栏
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -127,25 +211,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       _buildSettingsIcon(isGlowing),
                     ],
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 12.h),
 
-                  // Row 1: 最近播放 (固定高度)
+                  // Row 1: 最近播放
                   SizedBox(
-                    height: 400.h,
-                    child: _buildRecentList(), // 封装后的列表逻辑
+                    height: 350.h,
+                    child: _buildRecentList(),
                   ),
-
-                  const Spacer(flex: 2), // 弹性间距：解决底部溢出
 
                   // Row 2: 快捷路径
                   _buildSectionTitle('快捷路径'),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 12.h),
                   SizedBox(
-                    height: 160.h,
+                    height: 140.h,
                     child: _buildFavoritesList(favorites),
                   ),
-
-                  const Spacer(flex: 2), // 弹性间距：解决底部溢出
 
                   // Row 3: 资源中心
                   Row(
@@ -154,20 +234,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       if (!isUnlocked)
                         Padding(
                           padding: EdgeInsets.only(left: 8.w),
-                          child: Icon(Icons.lock_outline, color: Colors.grey, size: 18.sp),
+                          child: Icon(
+                            Icons.lock_outline,
+                            color: Colors.grey,
+                            size: 18.sp,
+                          ),
                         ),
                     ],
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 12.h),
                   SizedBox(
-                    height: 160.h,
+                    height: 140.h,
                     child: _buildResourcesList(visibleNodes, isUnlocked),
                   ),
                 ],
               ),
             ),
 
-            // 4. 右键菜单遮罩 (保持不变)
+            // 4. 右键菜单遮罩
             if (_showContextMenu)
               Positioned.fill(
                 child: GestureDetector(
@@ -175,6 +259,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   child: _buildContextMenu(),
                 ),
               ),
+
+            // 5. 暗号遮罩层
+            if (_showSecretOverlay)
+              const SecretCodeOverlay(),
           ],
         ),
       ),
@@ -184,13 +272,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 Widget _buildRecentList() {
     if (_recentItems.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.play_circle_outline, size: 48.sp, color: Colors.grey),
-            SizedBox(height: 8.h),
-            Text('暂无播放记录', style: TextStyle(color: Colors.grey, fontSize: 16.sp)),
-          ],
+        child: RecentlyPlayedCard(
+          focusNode: _firstItemFocusNode,
+          autofocus: true,
+          title: '播放历史',
+          isHistoryButton: true,
+          onMenu: () => _showRecentlyPlayedMenu(isHistory: true),
         ),
       );
     }
@@ -211,9 +298,12 @@ Widget _buildRecentList() {
           );
         }
         final item = _recentItems[index];
+        final isFirst = index == 0;
         return Padding(
           padding: EdgeInsets.only(right: 24.w),
           child: RecentlyPlayedCard(
+            focusNode: isFirst ? _firstItemFocusNode : null,
+            autofocus: isFirst,
             title: item['title'],
             posterUrl: item['poster'],
             previewUrl: item['preview'],
@@ -228,7 +318,7 @@ Widget _buildRecentList() {
   Widget _buildFavoritesList(List<FavoriteNode> favorites) {
     if (favorites.isEmpty) {
       return Center(
-        child: Text('暂无收藏', style: TextStyle(color: Colors.grey, fontSize: 16.sp)),
+        child: Text('暂无收藏', style: TextStyle(color: Colors.grey, fontSize: 22.sp)),
       );
     }
     return ListView.builder(
@@ -539,10 +629,10 @@ Widget _buildRecentList() {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         color: Colors.white,
-        fontSize: 20, // TODO: use sp
-        fontWeight: FontWeight.bold,
+        fontSize: 22.sp,
+        fontWeight: FontWeight.w600,
         letterSpacing: 1.2,
       ),
     );
@@ -647,7 +737,7 @@ Widget _buildRecentList() {
 Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrimary}) {
   return StatefulBuilder(builder: (context, setState) {
     // 1. 显式声明变量，确保分析器知道它是一个可变量
-    bool isFocused = false; 
+    bool isFocused = false;
 
     return Focus(
       onFocusChange: (f) => setState(() => isFocused = f),
@@ -678,7 +768,7 @@ Widget _buildDialogAction(String text, VoidCallback onTap, {required bool isPrim
 // 2. 将逻辑抽离成独立的私有方法，彻底解决 Dead Code 误报
 BoxDecoration? _getButtonStyle(bool isFocused, bool isPrimary) {
   if (!isFocused) return null;
-  
+
   return BoxDecoration(
     borderRadius: BorderRadius.circular(8.r),
     color: isPrimary ? const Color(0xFFFF6B35) : Colors.white24,
@@ -694,7 +784,7 @@ TextStyle _getButtonTextStyle(bool isFocused, bool isPrimary) {
       color: Colors.white, // 显式写出来以防万一
     );
   }
-  
+
   return TextStyle(
     color: isPrimary ? const Color(0xFFFF6B35) : Colors.grey,
     fontSize: 18.sp,

@@ -50,19 +50,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<bool> _performInitTasks() async {
     try {
-      // A. 核心本地任务
       MediaKit.ensureInitialized();
 
-      await Hive.initFlutter();
-
-      await Future.wait([
-        Hive.openBox('resources'),
-        Hive.openBox('favorites'),
-        Hive.openBox('history'),
-        Hive.openBox('settings'),
-      ]);
-
-      // B. 异步网络任务（超时 3s）
       bool relayDetected = false;
 
       await Future.wait([
