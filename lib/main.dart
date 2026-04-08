@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:media_kit/media_kit.dart';
 
 import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
@@ -19,21 +21,23 @@ void main() async {
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  unawaited(_initHive());
+  _startBackgroundInit();
 
   runApp(const ProviderScope(child: PickPlayerApp()));
 }
 
-Future<void> _initHive() async {
-  await Hive.initFlutter();
-  await Future.wait([
+void _startBackgroundInit() {
+  unawaited(Hive.initFlutter());
+  unawaited(Future.wait([
     Hive.openBox(AppConstants.settingsBox),
     Hive.openBox(AppConstants.historyBox),
     Hive.openBox(AppConstants.cacheBox),
     Hive.openBox(AppConstants.credentialsBox),
     Hive.openBox(AppConstants.nodesBox),
     Hive.openBox(AppConstants.favoritesBox),
-  ]);
+  ]));
+
+  Isolate.spawn((_) => MediaKit.ensureInitialized(), null);
 }
 
 class PickPlayerApp extends ConsumerStatefulWidget {

@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:media_kit/media_kit.dart';
 
 import 'home_screen.dart';
 import '../widgets/glow_loading_animation.dart';
@@ -15,43 +13,22 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  final Set<String> _completedInits = {};
-  bool _navigated = false;
-
   @override
   void initState() {
     super.initState();
-    _startBackgroundInit();
-  }
-
-  void _startBackgroundInit() {
-    compute(_initMediaKit, null).then((_) => _onInitComplete('media'));
-    compute(_initMediaKit, null).then((_) => _onInitComplete('media'));
-  }
-
-  static void _initMediaKit(dynamic _) {
-    MediaKit.ensureInitialized();
-  }
-
-  void _onInitComplete(String initName) {
-    if (!mounted || _navigated) return;
-    _completedInits.add(initName);
-    if (_completedInits.length >= 1 && !_navigated) {
-      _navigated = true;
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            PageRouteBuilder(
-              pageBuilder: (_, __, ___) => const HomeScreen(),
-              transitionsBuilder: (_, animation, __, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 100),
-            ),
-          );
-        }
-      });
-    }
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const HomeScreen(),
+            transitionsBuilder: (_, animation, __, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 100),
+          ),
+        );
+      }
+    });
   }
 
   @override
