@@ -94,11 +94,11 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
         width: _hasFocus ? _expandedWidth : _collapsedWidth,
         height: _cardHeight,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(12.r),
           color: const Color(0xFF1E1E1E),
           border: Border.all(
-            color: _hasFocus ? const Color(0xFFBB86FC) : Colors.transparent,
-            width: _hasFocus ? 3.w : 0,
+            color: _hasFocus ? const Color(0xFFBB86FC) : Colors.white10,
+            width: _hasFocus ? 3.w : 1.w,
           ),
           boxShadow: _hasFocus
               ? [
