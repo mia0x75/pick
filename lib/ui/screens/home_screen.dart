@@ -146,7 +146,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _initFocus() {
-    _currentFocusRow = 0;
+    _currentFocusRow = -1;
     _currentFocusIndex = 0;
     setState(() {});
   }
@@ -301,7 +301,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               ),
                             ],
                           ),
-                          _buildSettingsIcon(isGlowing, _currentFocusRow == 3),
+                          Row(
+                            children: [
+                              _buildSearchIcon(_currentFocusRow == -1),
+                              SizedBox(width: 16.w),
+                              _buildNetworkStatus(),
+                              SizedBox(width: 16.w),
+                              _buildDateTime(),
+                              SizedBox(width: 16.w),
+                              _buildSettingsIcon(isGlowing, _currentFocusRow == 3),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -707,6 +717,90 @@ Widget _buildRecentList() {
     return visibleNodes.length;
   }
 
+  Widget _buildSearchIcon(bool hasFocus) {
+    return Focus(
+      autofocus: hasFocus,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            _showSearchDialog(context);
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 48.w,
+        height: 48.h,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: hasFocus ? Colors.white10 : Colors.transparent,
+        ),
+        child: Center(
+          child: Icon(
+            Icons.search_rounded,
+            color: hasFocus ? const Color(0xFFBB86FC) : Colors.white54,
+            size: 28.sp,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNetworkStatus() {
+    return SizedBox(
+      width: 48.w,
+      height: 48.h,
+      child: Center(
+        child: Icon(
+          Icons.lan_rounded,
+          color: Colors.greenAccent,
+          size: 24.sp,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateTime() {
+    final now = DateTime.now();
+    final monthDay = '${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final time = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final weekday = weekdays[now.weekday - 1];
+
+    return Row(
+      children: [
+        Text(
+          monthDay,
+          style: TextStyle(
+            color: Colors.white54,
+            fontSize: 16.sp,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Text(
+          time,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Text(
+          weekday,
+          style: TextStyle(
+            color: Colors.white54,
+            fontSize: 16.sp,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSettingsIcon(bool isGlowing, bool hasFocus) {
     DateTime? pressStartTime;
 
@@ -890,7 +984,21 @@ Widget _buildRecentList() {
         }
         break;
       case LogicalKeyboardKey.arrowDown:
-        if (_currentFocusRow == 3 || _currentFocusRow == -1) {
+        if (_currentFocusRow == -1) {
+          if (row1ItemCount > 0) {
+            newRow = 0;
+            newIndex = 0;
+          } else if (row2ItemCount > 0) {
+            newRow = 1;
+            newIndex = 0;
+          } else if (row3ItemCount > 0) {
+            newRow = 2;
+            newIndex = 0;
+          } else {
+            newRow = 3;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 3 || _currentFocusRow == -1) {
           if (row1ItemCount > 0) {
             newRow = 0;
             newIndex = 0;
@@ -927,13 +1035,30 @@ Widget _buildRecentList() {
         break;
       case LogicalKeyboardKey.arrowLeft:
         if (_currentFocusRow == 3) break;
-        if (_currentFocusIndex > 0) {
+        if (_currentFocusRow == -1) {
+          newRow = 0;
+          newIndex = 0;
+        } else if (_currentFocusIndex > 0) {
           newRow = _currentFocusRow;
           newIndex = _currentFocusIndex - 1;
         }
         break;
       case LogicalKeyboardKey.arrowRight:
-        if (_currentFocusRow == 3) {
+        if (_currentFocusRow == -1) {
+          if (row1ItemCount > 0) {
+            newRow = 0;
+            newIndex = 0;
+          } else if (row2ItemCount > 0) {
+            newRow = 1;
+            newIndex = 0;
+          } else if (row3ItemCount > 0) {
+            newRow = 2;
+            newIndex = 0;
+          } else {
+            newRow = 3;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 3) {
           if (row1ItemCount > 0) {
             newRow = 0;
             newIndex = 0;
@@ -1122,6 +1247,27 @@ TextStyle _getButtonTextStyle(bool isFocused, bool isPrimary) {
   return TextStyle(
     color: isPrimary ? const Color(0xFFFF6B35) : Colors.grey,
     fontSize: 18.sp,
+  );
+}
+
+void _showSearchDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: const Text('搜索', style: TextStyle(color: Colors.white)),
+      content: const Text(
+        '使用手机扫码进入搜索页面',
+        style: TextStyle(color: Colors.white70),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('关闭', style: TextStyle(color: Colors.grey)),
+        ),
+      ],
+    ),
   );
 }
 
