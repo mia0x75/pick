@@ -190,8 +190,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           // 侧边栏
           endDrawer: SettingsDrawer(onClose: () => Navigator.of(context).pop()),
           body: Stack(
-          fit: StackFit.expand,
-          children: [
+            fit: StackFit.expand,
+            children: [
             // 1. 背景层
             Image.asset('assets/images/splash_background.png', fit: BoxFit.cover),
             Container(color: const Color(0xFF000000).withOpacity(0.7)),
