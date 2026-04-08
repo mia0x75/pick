@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:media_kit/media_kit.dart';
@@ -14,72 +15,43 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final Set<String> _completedInits = {};
+  bool _navigated = false;
+
   @override
   void initState() {
     super.initState();
-    _initAndNavigate();
+    _startBackgroundInit();
   }
 
-  Future<void> _initAndNavigate() async {
-    final minimumSplashDuration = Future.delayed(const Duration(milliseconds: 500));
+  void _startBackgroundInit() {
+    compute(_initMediaKit, null).then((_) => _onInitComplete('media'));
+    compute(_initMediaKit, null).then((_) => _onInitComplete('media'));
+  }
 
-    bool hasRelayAction = false;
-    final initializationTasks = _performInitTasks().then((relay) {
-      hasRelayAction = relay;
-    });
+  static void _initMediaKit(dynamic _) {
+    MediaKit.ensureInitialized();
+  }
 
-    await Future.wait([minimumSplashDuration, initializationTasks]);
-
-    if (!mounted) return;
-
-    if (hasRelayAction) {
-      // TODO: 发现接力推送，直接进入播放器全屏播放
-    } else {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const HomeScreen(),
-          transitionsBuilder: (_, animation, __, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 200),
-        ),
-      );
+  void _onInitComplete(String initName) {
+    if (!mounted || _navigated) return;
+    _completedInits.add(initName);
+    if (_completedInits.length >= 1 && !_navigated) {
+      _navigated = true;
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => const HomeScreen(),
+              transitionsBuilder: (_, animation, __, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 100),
+            ),
+          );
+        }
+      });
     }
-  }
-
-  Future<bool> _performInitTasks() async {
-    try {
-      MediaKit.ensureInitialized();
-
-      bool relayDetected = false;
-
-      await Future.wait([
-        _startWebSocketServer(),
-        _checkDeviceRelay().then((hasRelay) => relayDetected = hasRelay),
-      ]).timeout(
-        const Duration(seconds: 1),
-        onTimeout: () {
-          debugPrint('⚠️ 网络初始化超时，优雅降级');
-          return [];
-        },
-      );
-
-      return relayDetected;
-    } catch (e) {
-      debugPrint('💥 初始化异常: $e');
-      return false;
-    }
-  }
-
-  Future<void> _startWebSocketServer() async {
-    // TODO: 启动 WebSocket 服务
-    await Future.delayed(const Duration(milliseconds: 100));
-  }
-
-  Future<bool> _checkDeviceRelay() async {
-    // TODO: 检查 relay_action.json
-    await Future.delayed(const Duration(milliseconds: 100));
-    return false;
   }
 
   @override
