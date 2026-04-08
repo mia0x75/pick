@@ -51,6 +51,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   static const bool _isDebug = kDebugMode;
 
+  // 本地 debug 数据（不依赖 Hive）
+  final List<FavoriteNode> _debugFavorites = [
+    FavoriteNode(
+      id: 'debug_fav_1',
+      name: '电影收藏',
+      sourceNodeId: 'debug_node_1',
+      path: '/movies',
+      posterUrl: 'https://picsum.photos/200/300',
+      sortOrder: 0,
+    ),
+    FavoriteNode(
+      id: 'debug_fav_2',
+      name: '音乐收藏',
+      sourceNodeId: 'debug_node_2',
+      path: '/music',
+      posterUrl: 'https://picsum.photos/200/301',
+      sortOrder: 1,
+    ),
+  ];
+
+  final List<StorageNode> _debugNodes = [
+    StorageNode(
+      id: 'debug_node_1',
+      name: 'NAS 电影',
+      type: StorageType.smb,
+      baseUrl: 'smb://192.168.1.100/share1',
+      username: 'guest',
+      password: '',
+      category: NodeCategory.normal,
+      sortOrder: 0,
+    ),
+    StorageNode(
+      id: 'debug_node_2',
+      name: 'WebDAV 文档',
+      type: StorageType.webdav,
+      baseUrl: 'https://192.168.1.101/dav',
+      username: 'admin',
+      password: '123456',
+      category: NodeCategory.normal,
+      sortOrder: 1,
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -174,7 +217,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final isUnlocked = stealthMode == StealthMode.unlocked;
     final isGlowing = stealthMode == StealthMode.glowing;
 
-    final visibleNodes = nodes.where((n) => isUnlocked || !n.isPrivate).toList();
+    // DEBUG 模式使用本地数据
+    final displayFavorites = _isDebug && favorites.isEmpty ? _debugFavorites : favorites;
+    final displayNodes = _isDebug && nodes.isEmpty ? _debugNodes : nodes;
+    final visibleNodes = displayNodes.where((n) => isUnlocked || !n.isPrivate).toList();
 
     return Focus(
       autofocus: true,
@@ -259,7 +305,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     SizedBox(height: 8.h),
                     SizedBox(
                       height: 140.h,
-                      child: _buildFavoritesList(favorites),
+                      child: _buildFavoritesList(displayFavorites),
                     ),
 
                     SizedBox(height: 20.h),
@@ -269,7 +315,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     SizedBox(height: 8.h),
                     SizedBox(
                       height: 140.h,
-                      child: _buildResourcesList(visibleNodes, isUnlocked),
+                      child: _buildResourcesList(displayNodes.where((n) => isUnlocked || !n.isPrivate).toList(), isUnlocked),
                     ),
                   ],
                 ),
