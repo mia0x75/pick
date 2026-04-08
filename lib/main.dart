@@ -12,6 +12,19 @@ import 'shared/constants.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+  unawaited(_initHive());
+
+  runApp(const ProviderScope(child: PickPlayerApp()));
+}
+
+Future<void> _initHive() async {
   await Hive.initFlutter();
   await Future.wait([
     Hive.openBox(AppConstants.settingsBox),
@@ -21,15 +34,6 @@ void main() async {
     Hive.openBox(AppConstants.nodesBox),
     Hive.openBox(AppConstants.favoritesBox),
   ]);
-
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
-
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-  runApp(const ProviderScope(child: PickPlayerApp()));
 }
 
 class PickPlayerApp extends ConsumerStatefulWidget {
