@@ -220,7 +220,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // DEBUG 模式使用本地数据
     final displayFavorites = _isDebug && favorites.isEmpty ? _debugFavorites : favorites;
     final displayNodes = _isDebug && nodes.isEmpty ? _debugNodes : nodes;
-    final visibleNodes = displayNodes.where((n) => isUnlocked || !n.isPrivate).toList();
 
     return Focus(
       autofocus: true,
