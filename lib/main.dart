@@ -1,17 +1,15 @@
 import 'dart:async';
-import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:media_kit/media_kit.dart';
 
 import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   SystemChrome.setPreferredOrientations([
@@ -21,26 +19,23 @@ void main() async {
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  _startBackgroundInit();
-
-  runApp(const ProviderScope(child: PickPlayerApp()));
-}
-
-void _startBackgroundInit() {
-  // 等待 Hive 初始化完成后再打开盒子
-  Hive.initFlutter().then((_) {
-    unawaited(Future.wait([
-      Hive.openBox(AppConstants.settingsBox),
-      Hive.openBox(AppConstants.historyBox),
-      Hive.openBox(AppConstants.cacheBox),
-      Hive.openBox(AppConstants.credentialsBox),
-      Hive.openBox(AppConstants.nodesBox),
-      Hive.openBox(AppConstants.favoritesBox),
-    ],),);
+  // 后台启动初始化，不阻塞 UI
+  Future.microtask(() async {
+    await Hive.initFlutter();
+    // 延迟打开盒子，不阻塞 Splash
+    Future.delayed(const Duration(milliseconds: 800), () {
+      Future.wait([
+        Hive.openBox(AppConstants.settingsBox),
+        Hive.openBox(AppConstants.historyBox),
+        Hive.openBox(AppConstants.cacheBox),
+        Hive.openBox(AppConstants.credentialsBox),
+        Hive.openBox(AppConstants.nodesBox),
+        Hive.openBox(AppConstants.favoritesBox),
+      ]);
+    });
   });
 
-  // MediaKit 在后台 Isolate 初始化
-  Isolate.spawn((_) => MediaKit.ensureInitialized(), null);
+  runApp(const ProviderScope(child: PickPlayerApp()));
 }
 
 class PickPlayerApp extends ConsumerStatefulWidget {
