@@ -117,9 +117,9 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 90
 
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
         with:
-          files: build/app/outputs/flutter-apk/app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: pick-player-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 90
