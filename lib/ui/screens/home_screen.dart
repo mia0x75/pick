@@ -210,40 +210,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 顶部标题栏
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        _buildSectionTitle('最近播放'),
-                        _buildSettingsIcon(isGlowing),
-                      ],
+                    // 顶部 Logo 区域
+                    SizedBox(
+                      height: 50.h,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pick 片刻',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '极简 · 安全 · 互通',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                          _buildSettingsIcon(isGlowing),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 16.h),
 
                     // Row 1: 最近播放
+                    _buildSectionTitle('最近播放'),
+                    SizedBox(height: 8.h),
                     SizedBox(
                       height: 240.h,
                       child: _buildRecentList(),
                     ),
 
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 20.h),
 
                     // Row 2: 快捷路径
                     _buildSectionTitle('快捷路径'),
                     SizedBox(height: 8.h),
                     SizedBox(
-                      height: 160.h,
+                      height: 140.h,
                       child: _buildFavoritesList(favorites),
                     ),
 
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 20.h),
 
                     // Row 3: 资源中心
                     _buildSectionTitle('资源中心'),
                     SizedBox(height: 8.h),
                     SizedBox(
-                      height: 160.h,
+                      height: 140.h,
                       child: _buildResourcesList(visibleNodes, isUnlocked),
                     ),
                   ],
@@ -274,7 +299,7 @@ Widget _buildRecentList() {
       return Center(
         child: Text(
           '暂无播放记录',
-          style: TextStyle(color: Colors.grey, fontSize: 22.sp),
+          style: TextStyle(color: Colors.grey, fontSize: 24.sp),
         ),
       );
     }
@@ -315,7 +340,7 @@ Widget _buildRecentList() {
   Widget _buildFavoritesList(List<FavoriteNode> favorites) {
     if (favorites.isEmpty) {
       return Center(
-        child: Text('暂无收藏', style: TextStyle(color: Colors.grey, fontSize: 22.sp)),
+        child: Text('暂无收藏', style: TextStyle(color: Colors.grey, fontSize: 24.sp)),
       );
     }
     return ListView.builder(

@@ -16,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 800), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
@@ -24,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
             transitionsBuilder: (_, animation, __, child) {
               return FadeTransition(opacity: animation, child: child);
             },
-            transitionDuration: const Duration(milliseconds: 80),
+            transitionDuration: const Duration(milliseconds: 50),
           ),
         );
       }
@@ -35,76 +35,52 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(
-            'assets/images/splash_background.png',
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF1A1A1A),
+              Color(0xFF0D0D0D),
+              Color(0xFF1A1A1A),
+            ],
           ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.6),
-                  Colors.black.withValues(alpha: 0.4),
-                  Colors.black.withValues(alpha: 0.8),
-                ],
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Pick 片刻',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 48.sp,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 4,
+                ),
               ),
-            ),
-          ),
-          Center(
-            child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Transform.scale(
-                    scale: 0.9 + (0.1 * value),
-                    child: child,
-                  ),
-                );
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/app_icon.png',
-                    width: 120.w,
-                    height: 120.w,
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'Pick 片刻',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 36.sp,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    '极简 · 安全 · 互通',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16.sp,
-                      letterSpacing: 6,
-                    ),
-                  ),
-                  SizedBox(height: 32.h),
-                  const GlowLoadingAnimation(size: 32),
-                ],
+              SizedBox(height: 12.h),
+              Text(
+                '极简 · 安全 · 互通',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 18.sp,
+                  letterSpacing: 8,
+                ),
               ),
-            ),
+              SizedBox(height: 40.h),
+              SizedBox(
+                width: 24.w,
+                height: 24.h,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
