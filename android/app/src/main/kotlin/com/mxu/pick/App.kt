@@ -11,7 +11,7 @@ class App : Application() {
         
         val flutterEngine = FlutterEngine(this)
         flutterEngine.dartExecutor.executeDartEntrypoint(
-            DartExecutor.DartEntrypoint("lib/main.dart", "main")
+            DartExecutor.DartEntrypoint("lib/main.dart", "prewarm")
         )
         FlutterEngineCache.getInstance().put("pick_engine", flutterEngine)
     }
