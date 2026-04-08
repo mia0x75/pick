@@ -17,7 +17,7 @@
 
     <application
         android:label="Pick 片刻"
-        android:name="${applicationName}"
+        android:name=".App"
         android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/ic_banner">
         <meta-data
