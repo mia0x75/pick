@@ -36,7 +36,7 @@ void _startBackgroundInit() {
     try {
       await Hive.initFlutter();
 
-      await Future.delayed(const Duration(milliseconds: 800));
+      await Future.delayed(const Duration(milliseconds: 600));
 
       await Future.wait([
         Hive.openBox(AppConstants.settingsBox),
