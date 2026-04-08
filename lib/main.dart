@@ -35,7 +35,7 @@ void _startBackgroundInit() {
     Hive.openBox(AppConstants.credentialsBox),
     Hive.openBox(AppConstants.nodesBox),
     Hive.openBox(AppConstants.favoritesBox),
-  ]));
+  ],),);
 
   Isolate.spawn((_) => MediaKit.ensureInitialized(), null);
 }
