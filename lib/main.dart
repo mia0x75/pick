@@ -11,7 +11,7 @@ import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   SystemChrome.setPreferredOrientations([
@@ -30,8 +30,19 @@ void main() {
   // 设置设计分辨率
   final designSize = AppConstants.getDesignSize(screenWidth, screenHeight);
 
-  // 后台初始化
-  _startBackgroundInit();
+  // 同步初始化 Hive（必须等待完成）
+  await Hive.initFlutter();
+  await Future.wait([
+    Hive.openBox(AppConstants.settingsBox),
+    Hive.openBox(AppConstants.historyBox),
+    Hive.openBox(AppConstants.cacheBox),
+    Hive.openBox(AppConstants.credentialsBox),
+    Hive.openBox(AppConstants.nodesBox),
+    Hive.openBox(AppConstants.favoritesBox),
+  ]);
+
+  // 后台初始化 MediaKit
+  Isolate.spawn(_initMediaKit, null);
 
   runApp(
     ScreenUtilInit(
@@ -52,30 +63,7 @@ void main() {
   );
 }
 
-void _startBackgroundInit() {
-  // MediaKit 在独立 Isolate 初始化
-  Isolate.spawn(_initMediaKitIsolate, null);
-
-  // Hive 初始化和开盒子
-  Future.microtask(() async {
-    try {
-      await Hive.initFlutter();
-      await Future.delayed(const Duration(milliseconds: 600));
-      await Future.wait([
-        Hive.openBox(AppConstants.settingsBox),
-        Hive.openBox(AppConstants.historyBox),
-        Hive.openBox(AppConstants.cacheBox),
-        Hive.openBox(AppConstants.credentialsBox),
-        Hive.openBox(AppConstants.nodesBox),
-        Hive.openBox(AppConstants.favoritesBox),
-      ]);
-    } catch (e) {
-      debugPrint('⚠️ Hive 初始化失败: $e');
-    }
-  });
-}
-
-void _initMediaKitIsolate(dynamic _) {
+void _initMediaKit(dynamic _) {
   try {
     MediaKit.ensureInitialized();
   } catch (e) {
