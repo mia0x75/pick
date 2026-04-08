@@ -16,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 200), () {
+    Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
@@ -60,7 +60,7 @@ class _SplashScreenState extends State<SplashScreen> {
           Center(
             child: TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 800),
               curve: Curves.easeOutCubic,
               builder: (context, value, child) {
                 return Opacity(
