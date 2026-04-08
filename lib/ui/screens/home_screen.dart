@@ -176,15 +176,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     final visibleNodes = nodes.where((n) => isUnlocked || !n.isPrivate).toList();
 
-    return KeyboardListener(
-      focusNode: _keyboardFocusNode..requestFocus(),
-      onKeyEvent: (event) {
-        if (event is KeyDownEvent || event is KeyRepeatEvent) {
-          _handleKeyPress(event.logicalKey);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFF0D0D0D),
+    return Focus(
+      autofocus: true,
+      child: KeyboardListener(
+        focusNode: _keyboardFocusNode..requestFocus(),
+        onKeyEvent: (event) {
+          if (event is KeyDownEvent || event is KeyRepeatEvent) {
+            _handleKeyPress(event.logicalKey);
+          }
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFF0D0D0D),
         // 侧边栏
         endDrawer: SettingsDrawer(onClose: () => Navigator.of(context).pop()),
         body: Stack(
@@ -204,7 +206,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
             // 3. 核心内容布局
             Padding(
-              padding: EdgeInsets.fromLTRB(30.w, 20.h, 30.w, 20.h),
+              padding: EdgeInsets.fromLTRB(40.w, 20.h, 40.w, 20.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -231,30 +233,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   _buildSectionTitle('快捷路径'),
                   SizedBox(height: 8.h),
                   SizedBox(
-                    height: 180.h,
+                    height: 160.h,
                     child: _buildFavoritesList(favorites),
                   ),
 
                   SizedBox(height: 24.h),
 
                   // Row 3: 资源中心
-                  Row(
-                    children: [
-                      _buildSectionTitle('资源中心'),
-                      if (!isUnlocked)
-                        Padding(
-                          padding: EdgeInsets.only(left: 8.w),
-                          child: Icon(
-                            Icons.lock_outline,
-                            color: Colors.grey,
-                            size: 18.sp,
-                          ),
-                        ),
-                    ],
-                  ),
+                  _buildSectionTitle('资源中心'),
                   SizedBox(height: 8.h),
                   SizedBox(
-                    height: 180.h,
+                    height: 160.h,
                     child: _buildResourcesList(visibleNodes, isUnlocked),
                   ),
                 ],
@@ -282,12 +271,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 Widget _buildRecentList() {
     if (_recentItems.isEmpty) {
       return Center(
-        child: RecentlyPlayedCard(
-          focusNode: _firstItemFocusNode,
-          autofocus: true,
-          title: '播放历史',
-          isHistoryButton: true,
-          onMenu: () => _showRecentlyPlayedMenu(isHistory: true),
+        child: Text(
+          '暂无播放记录',
+          style: TextStyle(color: Colors.grey, fontSize: 22.sp),
         ),
       );
     }
@@ -606,8 +592,8 @@ Widget _buildRecentList() {
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            width: 48.w,
-            height: 48.h,
+            width: 56.w,
+            height: 56.h,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isGlowing
@@ -627,7 +613,7 @@ Widget _buildRecentList() {
               child: Icon(
                 Icons.settings,
                 color: isGlowing ? Colors.white : Colors.grey[400],
-                size: 24.sp,
+                size: 28.sp,
               ),
             ),
           ),
@@ -641,7 +627,7 @@ Widget _buildRecentList() {
       title,
       style: TextStyle(
         color: Colors.white,
-        fontSize: 28.sp,
+        fontSize: 32.sp,
         fontWeight: FontWeight.w600,
         letterSpacing: 1.2,
       ),
