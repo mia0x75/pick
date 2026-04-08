@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _initAndNavigate() async {
-    final minimumSplashDuration = Future.delayed(const Duration(milliseconds: 1500));
+    final minimumSplashDuration = Future.delayed(const Duration(milliseconds: 500));
 
     bool hasRelayAction = false;
     final initializationTasks = _performInitTasks().then((relay) {
@@ -41,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen> {
           transitionsBuilder: (_, animation, __, child) {
             return FadeTransition(opacity: animation, child: child);
           },
-          transitionDuration: const Duration(milliseconds: 600),
+          transitionDuration: const Duration(milliseconds: 200),
         ),
       );
     }
@@ -57,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
         _startWebSocketServer(),
         _checkDeviceRelay().then((hasRelay) => relayDetected = hasRelay),
       ]).timeout(
-        const Duration(seconds: 3),
+        const Duration(seconds: 1),
         onTimeout: () {
           debugPrint('⚠️ 网络初始化超时，优雅降级');
           return [];
@@ -73,12 +73,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _startWebSocketServer() async {
     // TODO: 启动 WebSocket 服务
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 100));
   }
 
   Future<bool> _checkDeviceRelay() async {
     // TODO: 检查 relay_action.json
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 100));
     return false;
   }
 
@@ -111,7 +111,7 @@ class _SplashScreenState extends State<SplashScreen> {
           Center(
             child: TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 800),
+              duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
               builder: (context, value, child) {
                 return Opacity(
@@ -127,30 +127,30 @@ class _SplashScreenState extends State<SplashScreen> {
                 children: [
                   Image.asset(
                     'assets/images/app_icon.png',
-                    width: 160.w,
-                    height: 160.w,
+                    width: 120.w,
+                    height: 120.w,
                   ),
-                  SizedBox(height: 32.h),
+                  SizedBox(height: 16.h),
                   Text(
                     'Pick 片刻',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 56.sp,
+                      fontSize: 36.sp,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
+                      letterSpacing: 2,
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 8.h),
                   Text(
                     '极简 · 安全 · 互通',
                     style: TextStyle(
                       color: Colors.white70,
-                      fontSize: 24.sp,
-                      letterSpacing: 12,
+                      fontSize: 16.sp,
+                      letterSpacing: 6,
                     ),
                   ),
-                  SizedBox(height: 80.h),
-                  const GlowLoadingAnimation(size: 56),
+                  SizedBox(height: 32.h),
+                  const GlowLoadingAnimation(size: 32),
                 ],
               ),
             ),
