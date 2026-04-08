@@ -36,7 +36,7 @@ void _startBackgroundInit() {
       Hive.openBox(AppConstants.credentialsBox),
       Hive.openBox(AppConstants.nodesBox),
       Hive.openBox(AppConstants.favoritesBox),
-    ]));
+    ],),);
   });
 
   // MediaKit 在后台 Isolate 初始化
