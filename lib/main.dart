@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:media_kit/media_kit.dart';
 
 import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
@@ -19,12 +21,24 @@ void main() {
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  // 后台启动初始化，不阻塞 UI
+  // 后台初始化
+  _startBackgroundInit();
+
+  runApp(const ProviderScope(child: PickPlayerApp()));
+}
+
+void _startBackgroundInit() {
+  // MediaKit 在独立 Isolate 初始化（不阻塞主线程）
+  Isolate.spawn(_initMediaKitIsolate, null);
+
+  // Hive 初始化和开盒子
   Future.microtask(() async {
-    await Hive.initFlutter();
-    // 延迟打开盒子，不阻塞 Splash
-    Future.delayed(const Duration(milliseconds: 800), () {
-      Future.wait([
+    try {
+      await Hive.initFlutter();
+
+      await Future.delayed(const Duration(milliseconds: 800));
+
+      await Future.wait([
         Hive.openBox(AppConstants.settingsBox),
         Hive.openBox(AppConstants.historyBox),
         Hive.openBox(AppConstants.cacheBox),
@@ -32,10 +46,18 @@ void main() {
         Hive.openBox(AppConstants.nodesBox),
         Hive.openBox(AppConstants.favoritesBox),
       ]);
-    });
+    } catch (e) {
+      debugPrint('⚠️ Hive 初始化失败: $e');
+    }
   });
+}
 
-  runApp(const ProviderScope(child: PickPlayerApp()));
+void _initMediaKitIsolate(dynamic _) {
+  try {
+    MediaKit.ensureInitialized();
+  } catch (e) {
+    debugPrint('⚠️ MediaKit 初始化失败: $e');
+  }
 }
 
 class PickPlayerApp extends ConsumerStatefulWidget {
