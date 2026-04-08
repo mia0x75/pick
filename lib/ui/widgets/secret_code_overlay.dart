@@ -41,7 +41,7 @@ class _SecretCodeOverlayState extends State<SecretCodeOverlay> {
     // Back to cancel
     if (event.logicalKey == LogicalKeyboardKey.escape ||
         event.logicalKey == LogicalKeyboardKey.goBack) {
-      widget.onCancel();
+      widget.onCancel?.call();
       return;
     }
 
@@ -73,7 +73,7 @@ class _SecretCodeOverlayState extends State<SecretCodeOverlay> {
 
     // Check if code is complete
     if (_inputBuffer.length == AppConstants.secretCodeLength) {
-      widget.onCodeComplete(List.from(_inputBuffer));
+      widget.onCodeComplete?.call(List.from(_inputBuffer));
     }
   }
 
