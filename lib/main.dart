@@ -21,23 +21,46 @@ void main() {
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
+  // 获取屏幕实际尺寸
+  final physicalSize = WidgetsBinding.instance.platformDispatcher.views.first.physicalSize;
+  final devicePixelRatio = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
+  final screenWidth = physicalSize.width / devicePixelRatio;
+  final screenHeight = physicalSize.height / devicePixelRatio;
+
+  // 设置设计分辨率
+  final designSize = AppConstants.getDesignSize(screenWidth, screenHeight);
+
   // 后台初始化
   _startBackgroundInit();
 
-  runApp(const ProviderScope(child: PickPlayerApp()));
+  runApp(
+    ScreenUtilInit(
+      designSize: designSize,
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (_, child) {
+        return ProviderScope(
+          child: MaterialApp(
+            title: AppConstants.appName,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.darkTheme,
+            home: const SplashScreen(),
+          ),
+        );
+      },
+    ),
+  );
 }
 
 void _startBackgroundInit() {
-  // MediaKit 在独立 Isolate 初始化（不阻塞主线程）
+  // MediaKit 在独立 Isolate 初始化
   Isolate.spawn(_initMediaKitIsolate, null);
 
   // Hive 初始化和开盒子
   Future.microtask(() async {
     try {
       await Hive.initFlutter();
-
       await Future.delayed(const Duration(milliseconds: 600));
-
       await Future.wait([
         Hive.openBox(AppConstants.settingsBox),
         Hive.openBox(AppConstants.historyBox),
@@ -57,32 +80,5 @@ void _initMediaKitIsolate(dynamic _) {
     MediaKit.ensureInitialized();
   } catch (e) {
     debugPrint('⚠️ MediaKit 初始化失败: $e');
-  }
-}
-
-class PickPlayerApp extends ConsumerStatefulWidget {
-  const PickPlayerApp({super.key});
-
-  @override
-  ConsumerState<PickPlayerApp> createState() => _PickPlayerAppState();
-}
-
-class _PickPlayerAppState extends ConsumerState<PickPlayerApp> {
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    return ScreenUtilInit(
-      designSize: AppConstants.getDesignSize(size.width, size.height),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (_, child) {
-        return MaterialApp(
-          title: AppConstants.appName,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.darkTheme,
-          home: const SplashScreen(),
-        );
-      },
-    );
   }
 }
