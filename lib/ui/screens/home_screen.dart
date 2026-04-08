@@ -41,16 +41,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   List<Map<String, dynamic>> _recentItems = [];
 
   final FocusNode _keyboardFocusNode = FocusNode();
-
   final FocusNode _settingsFocusNode = FocusNode();
 
   int _currentFocusRow = -1;
   int _currentFocusIndex = 0;
-  final FocusNode _settingsFocusNode = FocusNode();
 
   bool _showBackHint = false;
   DateTime? _lastBackPressTime;
   static const _backPressInterval = Duration(seconds: 2);
+
+  bool _showContextMenu = false;
+  bool _showSecretOverlay = false;
+  String _contextMenuType = '';
+  StorageNode? _contextMenuNode;
+  int _contextMenuIndex = -1;
 
   static const bool _isDebug = kDebugMode;
 
@@ -389,8 +393,6 @@ Widget _buildRecentList() {
       clipBehavior: Clip.none,
       itemCount: _recentItems.length + 1,
       itemBuilder: (_, index) {
-        final isFocused = _currentFocusRow == 0 && _currentFocusIndex == index;
-        
         if (index == _recentItems.length) {
           return Padding(
             padding: EdgeInsets.only(right: 24.w),
@@ -793,7 +795,7 @@ Widget _buildRecentList() {
   void _handleKeyPress(LogicalKeyboardKey key) {
     final stealthMode = ref.read(stealthProvider);
     
-    if (key == LogicalKeyboardKey.back || key == LogicalKeyboardKey.escape) {
+    if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.goBack) {
       final now = DateTime.now();
       if (_lastBackPressTime != null && 
           now.difference(_lastBackPressTime!) < _backPressInterval) {
