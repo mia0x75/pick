@@ -11,7 +11,7 @@ import 'ui/theme/app_theme.dart';
 import 'ui/screens/splash_screen.dart';
 import 'shared/constants.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   SystemChrome.setPreferredOrientations([
@@ -21,21 +21,11 @@ void main() async {
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  // 获取屏幕实际尺寸
-  final physicalSize = WidgetsBinding.instance.platformDispatcher.views.first.physicalSize;
-  final devicePixelRatio = WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
-  final screenWidth = physicalSize.width / devicePixelRatio;
-  final screenHeight = physicalSize.height / devicePixelRatio;
-
-  // 设置设计分辨率
+  final screenWidth = 1920.0;
+  final screenHeight = 1080.0;
   final designSize = AppConstants.getDesignSize(screenWidth, screenHeight);
 
-  // 快速初始化 Hive（不阻塞，后续懒加载）
-  await Hive.initFlutter();
-
-  // 后台初始化 MediaKit
-  Isolate.spawn(_initMediaKit, null);
-
+  debugPrint('🚀 main: 启动 runApp');
   runApp(
     ScreenUtilInit(
       designSize: designSize,
@@ -53,23 +43,44 @@ void main() async {
       },
     ),
   );
+
+  _startBackgroundInit();
+}
+
+void _startBackgroundInit() {
+  debugPrint('🔄 background: 开始初始化');
+  Isolate.spawn(_initMediaKit, null);
+
+  Future.microtask(() async {
+    try {
+      debugPrint('🔄 background: Hive.initFlutter()');
+      await Hive.initFlutter();
+      
+      debugPrint('🔄 background: 等待 600ms');
+      await Future.delayed(const Duration(milliseconds: 600));
+      
+      debugPrint('🔄 background: 打开 Hive boxes');
+      await Future.wait([
+        Hive.openBox(AppConstants.settingsBox),
+        Hive.openBox(AppConstants.historyBox),
+        Hive.openBox(AppConstants.cacheBox),
+        Hive.openBox(AppConstants.credentialsBox),
+        Hive.openBox(AppConstants.nodesBox),
+        Hive.openBox(AppConstants.favoritesBox),
+      ]);
+      debugPrint('✅ background: Hive boxes opened');
+    } catch (e, st) {
+      debugPrint('⚠️ background: Hive 初始化失败: $e\n$st');
+    }
+  });
 }
 
 void _initMediaKit(dynamic _) {
   try {
+    debugPrint('🔄 background: MediaKit 初始化');
     MediaKit.ensureInitialized();
+    debugPrint('✅ background: MediaKit 初始化完成');
   } catch (e) {
-    debugPrint('⚠️ MediaKit 初始化失败: $e');
+    debugPrint('⚠️ background: MediaKit 初始化失败: $e');
   }
-}
-
-Future<void> initHive() async {
-  await Future.wait([
-    Hive.openBox(AppConstants.settingsBox),
-    Hive.openBox(AppConstants.historyBox),
-    Hive.openBox(AppConstants.cacheBox),
-    Hive.openBox(AppConstants.credentialsBox),
-    Hive.openBox(AppConstants.nodesBox),
-    Hive.openBox(AppConstants.favoritesBox),
-  ]);
 }
