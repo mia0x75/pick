@@ -80,11 +80,12 @@ class _FavoriteCardState extends State<FavoriteCard> {
             fit: StackFit.expand,
             children: [
               _buildBackground(),
+              // 底部半透明渐变遮罩
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
-                height: _cardSize * 0.25,
+                height: _cardSize * 0.3,
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -98,19 +99,27 @@ class _FavoriteCardState extends State<FavoriteCard> {
                   ),
                 ),
               ),
+              // 底部标题栏
               Positioned(
-                bottom: 8.h,
                 left: 8.w,
                 right: 8.w,
-                child: Text(
-                  widget.name,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: _hasFocus ? Colors.white : Colors.white70,
-                    fontSize: 14.sp,
-                    fontWeight: _hasFocus ? FontWeight.bold : FontWeight.normal,
+                bottom: 8.h,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    widget.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),

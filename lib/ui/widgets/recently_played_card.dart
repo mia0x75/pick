@@ -155,8 +155,8 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(8.r),
+                  color: Colors.black.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
                   widget.title,

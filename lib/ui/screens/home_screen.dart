@@ -293,7 +293,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     _buildSectionTitle('最近播放'),
                     SizedBox(height: 8.h),
                     SizedBox(
-                      height: 240.h,
+                      height: 230.h,
                       child: _buildRecentList(),
                     ),
 
@@ -303,7 +303,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     _buildSectionTitle('快捷路径'),
                     SizedBox(height: 8.h),
                     SizedBox(
-                      height: 140.h,
+                      height: 150.h,
                       child: _buildFavoritesList(displayFavorites),
                     ),
 
@@ -313,7 +313,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     _buildSectionTitle('资源中心'),
                     SizedBox(height: 8.h),
                     SizedBox(
-                      height: 140.h,
+                      height: 150.h,
                       child: _buildResourcesList(displayNodes.where((n) => isUnlocked || !n.isPrivate).toList(), isUnlocked),
                     ),
                   ],
@@ -697,7 +697,7 @@ Widget _buildRecentList() {
     return Text(
       title,
       style: TextStyle(
-        color: Colors.white,
+        color: Colors.white70,
         fontSize: 32.sp,
         fontWeight: FontWeight.w600,
         letterSpacing: 1.2,

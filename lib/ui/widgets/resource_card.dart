@@ -92,19 +92,46 @@ class _ResourceCardState extends State<ResourceCard> {
                     color: Colors.white24,
                   ),
                 ),
+              // 底部半透明渐变遮罩
               Positioned(
-                bottom: 12.h,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: _cardSize * 0.3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.8),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // 底部标题栏
+              Positioned(
                 left: 8.w,
                 right: 8.w,
-                child: Text(
-                  widget.node.name,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: _hasFocus ? Colors.white : Colors.white54,
-                    fontSize: 14.sp,
-                    fontWeight: _hasFocus ? FontWeight.bold : FontWeight.normal,
+                bottom: 8.h,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    widget.node.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
