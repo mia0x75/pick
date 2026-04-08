@@ -21,8 +21,8 @@ void main() {
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  final screenWidth = 1920.0;
-  final screenHeight = 1080.0;
+  const screenWidth = 1920.0;
+  const screenHeight = 1080.0;
   final designSize = AppConstants.getDesignSize(screenWidth, screenHeight);
 
   debugPrint('🚀 main: 启动 runApp');
