@@ -39,15 +39,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   List<Map<String, dynamic>> _recentItems = [];
 
-  final FocusNode _firstItemFocusNode = FocusNode();
-
-  bool _showSecretOverlay = false;
-  bool _showContextMenu = false;
-  String _contextMenuType = '';
-  StorageNode? _contextMenuNode;
-  int _contextMenuIndex = -1;
-
   final FocusNode _keyboardFocusNode = FocusNode();
+
+  final List<FocusNode> _row1FocusNodes = [];
+  final List<FocusNode> _row2FocusNodes = [];
+  final List<FocusNode> _row3FocusNodes = [];
+
+  int _currentFocusRow = -1;
+  int _currentFocusIndex = 0;
+  final FocusNode _settingsFocusNode = FocusNode();
 
   static const bool _isDebug = kDebugMode;
 
@@ -133,8 +133,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ];
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _addDebugFavorites();
+        _initFocus();
       });
     }
+  }
+
+  void _initFocus() {
+    final nodes = ref.read(nodeProvider);
+    final favorites = ref.read(favoriteProvider);
+    final isUnlocked = ref.read(stealthProvider) == StealthMode.unlocked;
+    final visibleNodes = nodes.where((n) => isUnlocked || !n.isPrivate).toList();
+
+    final row1HasContent = _recentItems.isNotEmpty;
+    final row2HasContent = favorites.isNotEmpty;
+    final row3HasContent = visibleNodes.isNotEmpty;
+
+    if (row1HasContent) {
+      _currentFocusRow = 0;
+      _currentFocusIndex = 0;
+    } else if (row2HasContent) {
+      _currentFocusRow = 1;
+      _currentFocusIndex = 0;
+    } else if (row3HasContent) {
+      _currentFocusRow = 2;
+      _currentFocusIndex = 0;
+    } else {
+      _currentFocusRow = 2;
+      _currentFocusIndex = 0;
+    }
+    setState(() {});
   }
 
   void _addDebugFavorites() {
@@ -204,7 +231,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _row2Controller.dispose();
     _row3Controller.dispose();
     _flashController.dispose();
-    _firstItemFocusNode.dispose();
     _keyboardFocusNode.dispose();
     super.dispose();
   }
@@ -270,7 +296,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                'Pick 片刻',
+                                '片刻',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 48.sp,
@@ -287,7 +313,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               ),
                             ],
                           ),
-                          _buildSettingsIcon(isGlowing),
+                          _buildSettingsIcon(isGlowing, _currentFocusRow == 3),
                         ],
                       ),
                     ),
@@ -358,6 +384,8 @@ Widget _buildRecentList() {
       clipBehavior: Clip.none,
       itemCount: _recentItems.length + 1,
       itemBuilder: (_, index) {
+        final isFocused = _currentFocusRow == 0 && _currentFocusIndex == index;
+        
         if (index == _recentItems.length) {
           return Padding(
             padding: EdgeInsets.only(right: 24.w),
@@ -369,12 +397,9 @@ Widget _buildRecentList() {
           );
         }
         final item = _recentItems[index];
-        final isFirst = index == 0;
         return Padding(
           padding: EdgeInsets.only(right: 24.w),
           child: RecentlyPlayedCard(
-            focusNode: isFirst ? _firstItemFocusNode : null,
-            autofocus: isFirst,
             title: item['title'],
             posterUrl: item['poster'],
             previewUrl: item['preview'],
@@ -626,12 +651,14 @@ Widget _buildRecentList() {
     );
   }
 
-  Widget _buildSettingsIcon(bool isGlowing) {
+  Widget _buildSettingsIcon(bool isGlowing, bool hasFocus) {
     DateTime? pressStartTime;
 
     return StatefulBuilder(
       builder: (context, setState) {
         return Focus(
+          focusNode: _settingsFocusNode,
+          autofocus: hasFocus,
           onFocusChange: (focused) {
             if (focused) pressStartTime = null;
           },
@@ -710,26 +737,191 @@ Widget _buildRecentList() {
   }
 
   void _handleKeyPress(LogicalKeyboardKey key) {
-    if (ref.read(stealthProvider) != StealthMode.glowing) return;
+    final stealthMode = ref.read(stealthProvider);
+    
+    if (stealthMode == StealthMode.glowing) {
+      final now = DateTime.now();
+      if (_lastKeyPressTime != null &&
+          now.difference(_lastKeyPressTime!) > AppConstants.secretCodeTimeout) {
+        _keyBuffer.clear();
+      }
+      _lastKeyPressTime = now;
 
-    final now = DateTime.now();
-    if (_lastKeyPressTime != null &&
-        now.difference(_lastKeyPressTime!) > AppConstants.secretCodeTimeout) {
-      _keyBuffer.clear();
+      _keyBuffer.add(key);
+      if (_keyBuffer.length > AppConstants.secretCodeLength) {
+        _keyBuffer.removeAt(0);
+      }
+
+      if (_keyBuffer.length == AppConstants.secretCodeLength) {
+        final code = _keyBuffer
+            .map((k) => AppConstants.defaultSecretCode.indexOf(k))
+            .toList();
+        ref.read(stealthProvider.notifier).verifyCode(code);
+        _keyBuffer.clear();
+      }
+      return;
     }
-    _lastKeyPressTime = now;
 
-    _keyBuffer.add(key);
-    if (_keyBuffer.length > AppConstants.secretCodeLength) {
-      _keyBuffer.removeAt(0);
+    _handleNavigation(key);
+  }
+
+  void _handleNavigation(LogicalKeyboardKey key) {
+    final nodes = ref.read(nodeProvider);
+    final favorites = ref.read(favoriteProvider);
+    final isUnlocked = ref.read(stealthProvider) == StealthMode.unlocked;
+    final visibleNodes = nodes.where((n) => isUnlocked || !n.isPrivate).toList();
+
+    final row1ItemCount = _recentItems.length + 1;
+    final row2ItemCount = favorites.length;
+    final row3ItemCount = visibleNodes.length + 1;
+
+    int? newRow;
+    int? newIndex;
+
+    switch (key) {
+      case LogicalKeyboardKey.arrowUp:
+        if (_currentFocusRow == 3) {
+          if (row2ItemCount > 0) {
+            newRow = 1;
+            newIndex = 0;
+          } else if (row1ItemCount > 0) {
+            newRow = 0;
+            newIndex = 0;
+          } else {
+            newRow = 2;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 2) {
+          if (row2ItemCount > 0) {
+            newRow = 1;
+            newIndex = 0;
+          } else if (row1ItemCount > 0) {
+            newRow = 0;
+            newIndex = 0;
+          } else {
+            newRow = 3;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 1) {
+          if (row1ItemCount > 0) {
+            newRow = 0;
+            newIndex = 0;
+          } else if (row3ItemCount > 0) {
+            newRow = 2;
+            newIndex = 0;
+          } else {
+            newRow = 3;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 0) {
+          newRow = 3;
+          newIndex = 0;
+        }
+        break;
+      case LogicalKeyboardKey.arrowDown:
+        if (_currentFocusRow == 3 || _currentFocusRow == -1) {
+          if (row1ItemCount > 0) {
+            newRow = 0;
+            newIndex = 0;
+          } else if (row2ItemCount > 0) {
+            newRow = 1;
+            newIndex = 0;
+          } else if (row3ItemCount > 0) {
+            newRow = 2;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 0) {
+          if (row2ItemCount > 0) {
+            newRow = 1;
+            newIndex = 0;
+          } else if (row3ItemCount > 0) {
+            newRow = 2;
+            newIndex = 0;
+          } else {
+            newRow = 3;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 1) {
+          if (row3ItemCount > 0) {
+            newRow = 2;
+            newIndex = 0;
+          } else {
+            newRow = 3;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 2) {
+          newRow = 3;
+          newIndex = 0;
+        }
+        break;
+      case LogicalKeyboardKey.arrowLeft:
+        if (_currentFocusRow == 3) break;
+        if (_currentFocusIndex > 0) {
+          newRow = _currentFocusRow;
+          newIndex = _currentFocusIndex - 1;
+        }
+        break;
+      case LogicalKeyboardKey.arrowRight:
+        if (_currentFocusRow == 3) {
+          if (row1ItemCount > 0) {
+            newRow = 0;
+            newIndex = 0;
+          } else if (row2ItemCount > 0) {
+            newRow = 1;
+            newIndex = 0;
+          } else if (row3ItemCount > 0) {
+            newRow = 2;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 0) {
+          if (_currentFocusIndex < row1ItemCount - 1) {
+            newRow = 0;
+            newIndex = _currentFocusIndex + 1;
+          } else if (row2ItemCount > 0) {
+            newRow = 1;
+            newIndex = 0;
+          } else {
+            newRow = 3;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 1) {
+          if (_currentFocusIndex < row2ItemCount - 1) {
+            newRow = 1;
+            newIndex = _currentFocusIndex + 1;
+          } else if (row3ItemCount > 0) {
+            newRow = 2;
+            newIndex = 0;
+          } else if (row1ItemCount > 0) {
+            newRow = 0;
+            newIndex = 0;
+          } else {
+            newRow = 3;
+            newIndex = 0;
+          }
+        } else if (_currentFocusRow == 2) {
+          if (_currentFocusIndex < row3ItemCount - 1) {
+            newRow = 2;
+            newIndex = _currentFocusIndex + 1;
+          } else if (row1ItemCount > 0) {
+            newRow = 0;
+            newIndex = 0;
+          } else if (row2ItemCount > 0) {
+            newRow = 1;
+            newIndex = 0;
+          } else {
+            newRow = 3;
+            newIndex = 0;
+          }
+        }
+        break;
+      default:
+        break;
     }
 
-    if (_keyBuffer.length == AppConstants.secretCodeLength) {
-      final code = _keyBuffer
-          .map((k) => AppConstants.defaultSecretCode.indexOf(k))
-          .toList();
-      ref.read(stealthProvider.notifier).verifyCode(code);
-      _keyBuffer.clear();
+    if (newRow != null) {
+      _currentFocusRow = newRow;
+      _currentFocusIndex = newIndex ?? 0;
+      setState(() {});
     }
   }
 

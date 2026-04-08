@@ -8,12 +8,16 @@ class ResourceCard extends StatefulWidget {
   final StorageNode node;
   final VoidCallback? onSelect;
   final VoidCallback? onMenu;
+  final FocusNode? focusNode;
+  final bool autofocus;
 
   const ResourceCard({
     super.key,
     required this.node,
     this.onSelect,
     this.onMenu,
+    this.focusNode,
+    this.autofocus = false,
   });
 
   @override
@@ -54,6 +58,8 @@ class _ResourceCardState extends State<ResourceCard> {
     final normalShadows = <BoxShadow>[];
 
     return Focus(
+      focusNode: widget.focusNode,
+      autofocus: widget.autofocus,
       onFocusChange: (focus) => setState(() => _hasFocus = focus),
       onKeyEvent: _onKeyEvent,
       child: AnimatedScale(

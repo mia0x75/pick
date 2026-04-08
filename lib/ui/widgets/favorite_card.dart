@@ -8,6 +8,8 @@ class FavoriteCard extends StatefulWidget {
   final IconData icon;
   final VoidCallback? onSelect;
   final VoidCallback? onMenu;
+  final FocusNode? focusNode;
+  final bool autofocus;
 
   const FavoriteCard({
     super.key,
@@ -16,6 +18,8 @@ class FavoriteCard extends StatefulWidget {
     this.icon = Icons.folder,
     this.onSelect,
     this.onMenu,
+    this.focusNode,
+    this.autofocus = false,
   });
 
   @override
@@ -56,6 +60,8 @@ class _FavoriteCardState extends State<FavoriteCard> {
     final normalShadows = <BoxShadow>[];
 
     return Focus(
+      focusNode: widget.focusNode,
+      autofocus: widget.autofocus,
       onFocusChange: (focus) => setState(() => _hasFocus = focus),
       onKeyEvent: _onKeyEvent,
       child: AnimatedScale(
