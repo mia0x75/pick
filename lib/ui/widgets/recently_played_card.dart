@@ -131,77 +131,47 @@ class _RecentlyPlayedCardState extends State<RecentlyPlayedCard> {
                 ),
               ),
 
-            AnimatedOpacity(
-              duration: const Duration(milliseconds: 300),
-              opacity: _hasFocus ? 1.0 : 0.0,
+            // 底部半透明渐变遮罩 + 标题（始终显示）
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.2),
+                    Colors.black.withValues(alpha: 0.9),
+                  ],
+                  stops: const [0.5, 0.7, 1.0],
+                ),
+              ),
+            ),
+
+            // 底部标题栏（始终显示）
+            Positioned(
+              left: 16.w,
+              right: 16.w,
+              bottom: 16.h,
               child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.2),
-                      Colors.black.withValues(alpha: 0.9),
-                    ],
-                    stops: const [0.5, 0.7, 1.0],
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  widget.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
             ),
 
-            if (_hasFocus && !widget.isHistoryButton)
-              Positioned(
-                left: 24.w,
-                right: 24.w,
-                bottom: 24.h,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(color: Colors.black, blurRadius: 4),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4.r),
-                            child: LinearProgressIndicator(
-                              value: widget.progress,
-                              backgroundColor: Colors.white30,
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                Color(0xFFBB86FC),
-                              ),
-                              minHeight: 6.h,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 16.w),
-                        Text(
-                          '${(widget.progress * 100).toInt()}%',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
+            // 播放历史按钮提示
             if (_hasFocus && widget.isHistoryButton)
               Positioned(
                 bottom: 32.h,
