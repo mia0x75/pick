@@ -49,6 +49,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   int _currentFocusIndex = 0;
   final FocusNode _settingsFocusNode = FocusNode();
 
+  bool _showBackHint = false;
+  DateTime? _lastBackPressTime;
+  static const _backPressInterval = Duration(seconds: 2);
+
   static const bool _isDebug = kDebugMode;
 
   // 本地 debug 数据（不依赖 Hive）
@@ -362,6 +366,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // 5. 暗号遮罩层
               if (_showSecretOverlay)
                 const SecretCodeOverlay(),
+
+              // 6. 返回提示
+              if (_showBackHint)
+                Positioned(
+                  bottom: 60.h,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 16.h),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        '再按一次返回键退出',
+                        style: TextStyle(color: Colors.white, fontSize: 24.sp),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -738,6 +763,21 @@ Widget _buildRecentList() {
 
   void _handleKeyPress(LogicalKeyboardKey key) {
     final stealthMode = ref.read(stealthProvider);
+    
+    if (key == LogicalKeyboardKey.back || key == LogicalKeyboardKey.escape) {
+      final now = DateTime.now();
+      if (_lastBackPressTime != null && 
+          now.difference(_lastBackPressTime!) < _backPressInterval) {
+        SystemNavigator.pop();
+      } else {
+        _lastBackPressTime = now;
+        setState(() => _showBackHint = true);
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) setState(() => _showBackHint = false);
+        });
+      }
+      return;
+    }
     
     if (stealthMode == StealthMode.glowing) {
       final now = DateTime.now();
