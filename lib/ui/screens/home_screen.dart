@@ -204,7 +204,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
             // 3. 核心内容布局
             Padding(
-              padding: EdgeInsets.fromLTRB(48.w, 27.h, 48.w, 12.h),
+              padding: EdgeInsets.fromLTRB(30.w, 20.h, 30.w, 20.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -217,21 +217,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       _buildSettingsIcon(isGlowing),
                     ],
                   ),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 12.h),
 
                   // Row 1: 最近播放
                   SizedBox(
-                    height: 300.h,
+                    height: 240.h,
                     child: _buildRecentList(),
                   ),
 
+                  SizedBox(height: 24.h),
+
                   // Row 2: 快捷路径
                   _buildSectionTitle('快捷路径'),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 8.h),
                   SizedBox(
                     height: 180.h,
                     child: _buildFavoritesList(favorites),
                   ),
+
+                  SizedBox(height: 24.h),
 
                   // Row 3: 资源中心
                   Row(
@@ -248,7 +252,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         ),
                     ],
                   ),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 8.h),
                   SizedBox(
                     height: 180.h,
                     child: _buildResourcesList(visibleNodes, isUnlocked),
