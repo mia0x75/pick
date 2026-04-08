@@ -192,77 +192,78 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           body: Stack(
             fit: StackFit.expand,
             children: [
-            // 1. 背景层
-            Image.asset('assets/images/splash_background.png', fit: BoxFit.cover),
-            Container(color: const Color(0xFF000000).withOpacity(0.7)),
+              // 1. 背景层
+              Image.asset('assets/images/splash_background.png', fit: BoxFit.cover),
+              Container(color: const Color(0xFF000000).withOpacity(0.7)),
 
-            // 2. 隐私闪烁 (保持不变)
-            AnimatedBuilder(
-              animation: _flashAnimation,
-              builder: (context, child) => Container(
-                color: const Color(0xFFBB86FC).withOpacity(_flashAnimation.value * 0.3),
-              ),
-            ),
-
-            // 3. 核心内容布局
-            Padding(
-              padding: EdgeInsets.fromLTRB(40.w, 20.h, 40.w, 20.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 顶部标题栏
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildSectionTitle('最近播放'),
-                      _buildSettingsIcon(isGlowing),
-                    ],
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // Row 1: 最近播放
-                  SizedBox(
-                    height: 240.h,
-                    child: _buildRecentList(),
-                  ),
-
-                  SizedBox(height: 24.h),
-
-                  // Row 2: 快捷路径
-                  _buildSectionTitle('快捷路径'),
-                  SizedBox(height: 8.h),
-                  SizedBox(
-                    height: 160.h,
-                    child: _buildFavoritesList(favorites),
-                  ),
-
-                  SizedBox(height: 24.h),
-
-                  // Row 3: 资源中心
-                  _buildSectionTitle('资源中心'),
-                  SizedBox(height: 8.h),
-                  SizedBox(
-                    height: 160.h,
-                    child: _buildResourcesList(visibleNodes, isUnlocked),
-                  ),
-                ],
-              ),
-            ),
-
-            // 4. 右键菜单遮罩
-            if (_showContextMenu)
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: () => setState(() => _showContextMenu = false),
-                  child: _buildContextMenu(),
+              // 2. 隐私闪烁
+              AnimatedBuilder(
+                animation: _flashAnimation,
+                builder: (context, child) => Container(
+                  color: const Color(0xFFBB86FC).withOpacity(_flashAnimation.value * 0.3),
                 ),
               ),
 
-            // 5. 暗号遮罩层
-            if (_showSecretOverlay)
-              const SecretCodeOverlay(),
-          ],
+              // 3. 核心内容布局
+              Padding(
+                padding: EdgeInsets.fromLTRB(40.w, 20.h, 40.w, 20.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 顶部标题栏
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _buildSectionTitle('最近播放'),
+                        _buildSettingsIcon(isGlowing),
+                      ],
+                    ),
+                    SizedBox(height: 12.h),
+
+                    // Row 1: 最近播放
+                    SizedBox(
+                      height: 240.h,
+                      child: _buildRecentList(),
+                    ),
+
+                    SizedBox(height: 24.h),
+
+                    // Row 2: 快捷路径
+                    _buildSectionTitle('快捷路径'),
+                    SizedBox(height: 8.h),
+                    SizedBox(
+                      height: 160.h,
+                      child: _buildFavoritesList(favorites),
+                    ),
+
+                    SizedBox(height: 24.h),
+
+                    // Row 3: 资源中心
+                    _buildSectionTitle('资源中心'),
+                    SizedBox(height: 8.h),
+                    SizedBox(
+                      height: 160.h,
+                      child: _buildResourcesList(visibleNodes, isUnlocked),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 4. 右键菜单遮罩
+              if (_showContextMenu)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _showContextMenu = false),
+                    child: _buildContextMenu(),
+                  ),
+                ),
+
+              // 5. 暗号遮罩层
+              if (_showSecretOverlay)
+                const SecretCodeOverlay(),
+            ],
+          ),
         ),
       ),
     );

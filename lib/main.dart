@@ -27,16 +27,19 @@ void main() async {
 }
 
 void _startBackgroundInit() {
-  unawaited(Hive.initFlutter());
-  unawaited(Future.wait([
-    Hive.openBox(AppConstants.settingsBox),
-    Hive.openBox(AppConstants.historyBox),
-    Hive.openBox(AppConstants.cacheBox),
-    Hive.openBox(AppConstants.credentialsBox),
-    Hive.openBox(AppConstants.nodesBox),
-    Hive.openBox(AppConstants.favoritesBox),
-  ],),);
+  // 等待 Hive 初始化完成后再打开盒子
+  Hive.initFlutter().then((_) {
+    unawaited(Future.wait([
+      Hive.openBox(AppConstants.settingsBox),
+      Hive.openBox(AppConstants.historyBox),
+      Hive.openBox(AppConstants.cacheBox),
+      Hive.openBox(AppConstants.credentialsBox),
+      Hive.openBox(AppConstants.nodesBox),
+      Hive.openBox(AppConstants.favoritesBox),
+    ]));
+  });
 
+  // MediaKit 在后台 Isolate 初始化
   Isolate.spawn((_) => MediaKit.ensureInitialized(), null);
 }
 
