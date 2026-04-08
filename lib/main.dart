@@ -71,7 +71,7 @@ class _PickPlayerAppState extends ConsumerState<PickPlayerApp> {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(1920, 1080),
+      designSize: const Size(3840, 2160),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (_, child) {
