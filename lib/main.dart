@@ -70,8 +70,9 @@ class PickPlayerApp extends ConsumerStatefulWidget {
 class _PickPlayerAppState extends ConsumerState<PickPlayerApp> {
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     return ScreenUtilInit(
-      designSize: const Size(3840, 2160),
+      designSize: AppConstants.getDesignSize(size.width, size.height),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (_, child) {

@@ -1,10 +1,32 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 
 class AppConstants {
   AppConstants._();
 
   static const String appName = 'Pick 片刻';
   static const String appVersion = '0.1.0';
+
+  // TV 主流分辨率适配
+  static const Map<String, Size> tvResolutions = {
+    '720p': Size(1280, 720),
+    '1080p': Size(1920, 1080),
+    '4K': Size(3840, 2160),
+  };
+
+  // 默认设计分辨率
+  static Size get defaultDesignSize => tvResolutions['1080p']!;
+
+  // 根据屏幕实际分辨率选择设计尺寸
+  static Size getDesignSize(double screenWidth, double screenHeight) {
+    if (screenWidth >= 3840 || screenHeight >= 2160) {
+      return tvResolutions['4K']!;
+    } else if (screenWidth >= 1920 || screenHeight >= 1080) {
+      return tvResolutions['1080p']!;
+    } else {
+      return tvResolutions['720p']!;
+    }
+  }
 
   // TV Layout
   static const double tvEdgePadding = 96.0;
