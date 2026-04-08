@@ -116,10 +116,3 @@ jobs:
           name: pick-player-release
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 90
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: pick-player-release
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 90
