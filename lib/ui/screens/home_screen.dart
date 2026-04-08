@@ -217,9 +217,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 'Pick 片刻',
@@ -229,6 +228,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              SizedBox(width: 16.w),
                               Text(
                                 '极简 · 安全 · 互通',
                                 style: TextStyle(

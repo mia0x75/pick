@@ -14,18 +14,13 @@ class AppConstants {
     '4K': Size(3840, 2160),
   };
 
-  // 默认设计分辨率
+  // 默认设计分辨率（固定1080p，保持所有屏幕一致的UI大小）
   static Size get defaultDesignSize => tvResolutions['1080p']!;
 
-  // 根据屏幕实际分辨率选择设计尺寸
+  // 根据屏幕实际分辨率选择设计尺寸（保留此方法用于未来需要缩放UI的场景）
   static Size getDesignSize(double screenWidth, double screenHeight) {
-    if (screenWidth >= 3840 || screenHeight >= 2160) {
-      return tvResolutions['4K']!;
-    } else if (screenWidth >= 1920 || screenHeight >= 1080) {
-      return tvResolutions['1080p']!;
-    } else {
-      return tvResolutions['720p']!;
-    }
+    // 始终使用1080p设计稿，确保UI元素在所有分辨率下大小一致
+    return defaultDesignSize;
   }
 
   // TV Layout
