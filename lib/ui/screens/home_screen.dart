@@ -238,7 +238,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             fit: StackFit.expand,
             children: [
               // 1. 背景层
-              Image.asset('assets/images/splash_background.png', fit: BoxFit.cover),
+              Image.asset(
+                'assets/images/splash_background.png',
+                fit: BoxFit.cover,
+                cacheWidth: 1280,
+              ),
               Container(color: const Color(0xFF000000).withOpacity(0.7)),
 
               // 2. 隐私闪烁
