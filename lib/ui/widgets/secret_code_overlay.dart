@@ -8,13 +8,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/constants.dart';
 
 class SecretCodeOverlay extends StatefulWidget {
-  final Function(List<LogicalKeyboardKey>) onCodeComplete;
-  final Function() onCancel;
+  final Function(List<LogicalKeyboardKey>)? onCodeComplete;
+  final Function()? onCancel;
 
   const SecretCodeOverlay({
     super.key,
-    required this.onCodeComplete,
-    required this.onCancel,
+    this.onCodeComplete,
+    this.onCancel,
   });
 
   @override

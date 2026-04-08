@@ -8,7 +8,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/providers/stealth_provider.dart';
 import '../../core/providers/node_provider.dart';
-import '../../core/models/storage_node.dart';
+import '../../core/models/storage_node.dart' show StorageNode, StorageType, NodeCategory, FavoriteNode;
 import '../../shared/constants.dart';
 import '../widgets/recently_played_card.dart';
 import '../widgets/favorite_card.dart';
@@ -99,22 +99,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final favNotifier = ref.read(favoriteProvider.notifier);
     final currentFavs = ref.read(favoriteProvider);
     if (currentFavs.isEmpty) {
-      favNotifier.addFavorite(FavoriteNode(
-        id: 'debug_fav_1',
-        name: '测试收藏 1',
-        sourceNodeId: 'debug_node_1',
-        path: '/movies',
-        posterUrl: 'https://picsum.photos/200/300',
-        sortOrder: 0,
-      ));
-      favNotifier.addFavorite(FavoriteNode(
-        id: 'debug_fav_2',
-        name: '测试收藏 2',
-        sourceNodeId: 'debug_node_2',
-        path: '/music',
-        posterUrl: 'https://picsum.photos/200/301',
-        sortOrder: 1,
-      ));
+      favNotifier.addFavorite(
+        FavoriteNode(
+          id: 'debug_fav_1',
+          name: '测试收藏 1',
+          sourceNodeId: 'debug_node_1',
+          path: '/movies',
+          posterUrl: 'https://picsum.photos/200/300',
+          sortOrder: 0,
+        ),
+      );
+      favNotifier.addFavorite(
+        FavoriteNode(
+          id: 'debug_fav_2',
+          name: '测试收藏 2',
+          sourceNodeId: 'debug_node_2',
+          path: '/music',
+          posterUrl: 'https://picsum.photos/200/301',
+          sortOrder: 1,
+        ),
+      );
     }
     _addDebugNodes();
   }
@@ -124,28 +128,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final nodeNotifier = ref.read(nodeProvider.notifier);
     final currentNodes = ref.read(nodeProvider);
     if (currentNodes.isEmpty) {
-      nodeNotifier.addNode(StorageNode(
-        id: 'debug_node_1',
-        name: '测试资源 1',
-        protocol: ProtocolType.smb,
-        host: '192.168.1.100',
-        path: '/share1',
-        username: 'guest',
-        password: '',
-        category: NodeCategory.normal,
-        sortOrder: 0,
-      ));
-      nodeNotifier.addNode(StorageNode(
-        id: 'debug_node_2',
-        name: '测试资源 2',
-        protocol: ProtocolType.webdav,
-        host: '192.168.1.101',
-        path: '/dav',
-        username: 'admin',
-        password: '123456',
-        category: NodeCategory.normal,
-        sortOrder: 1,
-      ));
+      nodeNotifier.addNode(
+        StorageNode(
+          id: 'debug_node_1',
+          name: '测试资源 1',
+          type: StorageType.smb,
+          baseUrl: 'smb://192.168.1.100/share1',
+          username: 'guest',
+          password: '',
+          category: NodeCategory.normal,
+          sortOrder: 0,
+        ),
+      );
+      nodeNotifier.addNode(
+        StorageNode(
+          id: 'debug_node_2',
+          name: '测试资源 2',
+          type: StorageType.webdav,
+          baseUrl: 'https://192.168.1.101/dav',
+          username: 'admin',
+          password: '123456',
+          category: NodeCategory.normal,
+          sortOrder: 1,
+        ),
+      );
     }
   }
 
