@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -10,23 +11,32 @@ class NodeNotifier extends StateNotifier<List<StorageNode>> {
   }
 
   Future<void> _loadNodes() async {
-    final box = Hive.box(AppConstants.nodesBox);
-    final nodes = <StorageNode>[];
-    for (final key in box.keys) {
-      final data = box.get(key);
-      if (data != null) {
-        nodes.add(StorageNode.fromJson(data));
+    try {
+      final box = Hive.box(AppConstants.nodesBox);
+      final nodes = <StorageNode>[];
+      for (final key in box.keys) {
+        final data = box.get(key);
+        if (data != null) {
+          nodes.add(StorageNode.fromJson(data));
+        }
       }
+      nodes.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      state = nodes;
+    } catch (e) {
+      debugPrint('⚠️ 加载节点失败: $e');
+      state = [];
     }
-    nodes.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    state = nodes;
   }
 
   Future<void> addNode(StorageNode node) async {
-    final box = Hive.box(AppConstants.nodesBox);
-    await box.put(node.id, node.toJson());
-    final updated = [...state, node]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    state = updated;
+    try {
+      final box = Hive.box(AppConstants.nodesBox);
+      await box.put(node.id, node.toJson());
+      final updated = [...state, node]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      state = updated;
+    } catch (e) {
+      debugPrint('⚠️ 添加节点失败: $e');
+    }
   }
 
   Future<void> removeNode(String id) async {
@@ -65,16 +75,21 @@ class FavoriteNotifier extends StateNotifier<List<FavoriteNode>> {
   }
 
   Future<void> _loadFavorites() async {
-    final box = Hive.box(AppConstants.favoritesBox);
-    final favs = <FavoriteNode>[];
-    for (final key in box.keys) {
-      final data = box.get(key);
-      if (data != null) {
-        favs.add(FavoriteNode.fromJson(data));
+    try {
+      final box = Hive.box(AppConstants.favoritesBox);
+      final favs = <FavoriteNode>[];
+      for (final key in box.keys) {
+        final data = box.get(key);
+        if (data != null) {
+          favs.add(FavoriteNode.fromJson(data));
+        }
       }
+      favs.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      state = favs;
+    } catch (e) {
+      debugPrint('⚠️ 加载收藏失败: $e');
+      state = [];
     }
-    favs.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    state = favs;
   }
 
   Future<void> addFavorite(FavoriteNode fav) async {
