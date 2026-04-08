@@ -51,7 +51,7 @@ class _SplashScreenState extends State<SplashScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Pick 片刻',
+                '片刻',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 48.sp,
