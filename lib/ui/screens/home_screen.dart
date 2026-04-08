@@ -187,9 +187,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         },
         child: Scaffold(
           backgroundColor: const Color(0xFF0D0D0D),
-        // 侧边栏
-        endDrawer: SettingsDrawer(onClose: () => Navigator.of(context).pop()),
-        body: Stack(
+          // 侧边栏
+          endDrawer: SettingsDrawer(onClose: () => Navigator.of(context).pop()),
+          body: Stack(
           fit: StackFit.expand,
           children: [
             // 1. 背景层
